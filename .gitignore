@@ -4,3 +4,5 @@ target/
 .settings/ 
 *.class 
 .mvn/ 
+application-local.properties
+.env
