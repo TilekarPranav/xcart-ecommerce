@@ -1,8 +1,7 @@
-target/ 
-.classpath 
-.project 
-.settings/ 
-*.class 
-.mvn/ 
+target/
+.classpath
+.project
+.settings/
+*.class
 application-local.properties
 .env
