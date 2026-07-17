@@ -1,0 +1,23 @@
+package com.ecommerce.user.dto;
+
+import java.time.Instant;
+import java.util.Set;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class AdminUserResponse {
+
+	private Long id;
+	private String name;
+	private String email;
+	private boolean enabled;
+	private Set<String> roles;
+	private Instant createdAt;
+}
