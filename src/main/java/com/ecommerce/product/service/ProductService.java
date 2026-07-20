@@ -8,6 +8,8 @@ import com.ecommerce.product.dto.ProductRequest;
 import com.ecommerce.product.dto.ProductResponse;
 import com.ecommerce.product.entity.Product;
 import com.ecommerce.product.repository.ProductRepository;
+import com.ecommerce.product.repository.ProductSpecifications;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -72,7 +74,8 @@ public class ProductService {
 			throw new BadRequestException("minPrice cannot be greater than maxPrice");
 		}
 
-		return productRepository.search(name, categoryId, minPrice, maxPrice, pageable).map(this::toResponse);
+		var spec = ProductSpecifications.build(name, categoryId, minPrice, maxPrice);
+		return productRepository.findAll(spec, pageable).map(this::toResponse);
 	}
 
 	private Product findByIdOrThrow(Long id) {

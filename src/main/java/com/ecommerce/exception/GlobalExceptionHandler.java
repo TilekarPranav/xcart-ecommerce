@@ -16,6 +16,15 @@ import jakarta.validation.ConstraintViolationException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+	private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+	@ExceptionHandler(Exception.class)
+	public ResponseEntity<ApiResponse<Void>> handleGeneric(Exception ex) {
+		log.error("Unhandled exception", ex);
+		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.body(ApiResponse.error("Something went wrong. Please try again later."));
+	}
+
 	@ExceptionHandler(ResourceNotFoundException.class)
 	public ResponseEntity<ApiResponse<Void>> handleNotFound(ResourceNotFoundException ex) {
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(ex.getMessage()));
@@ -47,11 +56,11 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(ex.getMessage()));
 	}
 
-	@ExceptionHandler(Exception.class)
-	public ResponseEntity<ApiResponse<Void>> handleGeneric(Exception ex) {
-		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-				.body(ApiResponse.error("Something went wrong. Please try again later."));
-	}
+//	@ExceptionHandler(Exception.class)
+//	public ResponseEntity<ApiResponse<Void>> handleGeneric(Exception ex) {
+//		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+//				.body(ApiResponse.error("Something went wrong. Please try again later."));
+//	}
 
 	@ExceptionHandler(org.springframework.web.bind.MissingServletRequestParameterException.class)
 	public ResponseEntity<ApiResponse<Void>> handleMissingParam(
