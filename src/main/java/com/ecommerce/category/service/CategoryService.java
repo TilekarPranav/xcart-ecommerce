@@ -10,6 +10,7 @@ import com.ecommerce.category.entity.Category;
 import com.ecommerce.category.repository.CategoryRepository;
 import com.ecommerce.exception.ConflictException;
 import com.ecommerce.exception.ResourceNotFoundException;
+import com.ecommerce.product.repository.ProductRepository;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 public class CategoryService {
 
 	private final CategoryRepository categoryRepository;
+	private final ProductRepository productRepository;
 
 	@Transactional
 	public CategoryResponse create(CategoryRequest request) {
@@ -53,6 +55,9 @@ public class CategoryService {
 	@Transactional
 	public void delete(Long id) {
 		Category category = findByIdOrThrow(id);
+		if (productRepository.existsByCategoryId(id)) {
+			throw new ConflictException("Cannot delete a category that still has products assigned to it");
+		}
 		categoryRepository.delete(category);
 	}
 
