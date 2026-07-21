@@ -60,6 +60,7 @@ public class ProductService {
 	@Transactional
 	public void delete(Long id) {
 		Product product = findByIdOrThrow(id);
+		inventoryRepository.findByProductId(id).ifPresent(inventoryRepository::delete);
 		productRepository.delete(product);
 	}
 
