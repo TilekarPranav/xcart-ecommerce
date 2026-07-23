@@ -40,6 +40,8 @@ public class SecurityConfig {
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http.csrf(csrf -> csrf.disable()).cors(cors -> {
 		}).authorizeHttpRequests(auth -> auth.requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+				.requestMatchers(HttpMethod.GET, "/products/*/reviews", "/products/*/reviews/average").permitAll()
+				.requestMatchers(HttpMethod.POST, "/products/*/reviews").authenticated()
 				.requestMatchers(HttpMethod.POST, "/products/images/**").hasRole("ADMIN")
 				.requestMatchers(HttpMethod.GET, "/inventory/**").permitAll()
 				.requestMatchers(HttpMethod.PUT, "/inventory/**").hasRole("ADMIN")
