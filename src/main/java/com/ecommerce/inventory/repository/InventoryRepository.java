@@ -12,6 +12,6 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
 
 	Optional<Inventory> findByProductId(Long productId);
 
-	@Query("SELECT COUNT(i) FROM Inventory i WHERE i.quantity < :threshold")
+	@Query("SELECT COUNT(i) FROM Inventory i WHERE i.quantity < :threshold AND i.product.active = true")
 	long countLowStock(@Param("threshold") int threshold);
 }

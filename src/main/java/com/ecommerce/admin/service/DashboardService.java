@@ -22,7 +22,7 @@ public class DashboardService {
 
 	public DashboardStatsResponse getStats() {
 		return DashboardStatsResponse.builder().totalUsers(userRepository.count())
-				.totalProducts(productRepository.count()).totalOrders(orderRepository.count())
+				.totalProducts(productRepository.countByActiveTrue()).totalOrders(orderRepository.count())
 				.totalRevenue(orderRepository.calculateTotalRevenue())
 				.lowStockProductCount(inventoryRepository.countLowStock(LOW_STOCK_THRESHOLD))
 				.pendingOrderCount(orderRepository.countByStatus(OrderStatus.PLACED)).build();
