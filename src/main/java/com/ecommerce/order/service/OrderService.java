@@ -118,8 +118,15 @@ public class OrderService {
 		}
 
 		order.setStatus(newStatus);
-		kafkaTemplate.send(KafkaTopicConfig.ORDER_STATUS_TOPIC, String.valueOf(order.getId()),
-				new OrderStatusChangedEvent(order.getUser().getId(), order.getId(), newStatus.name()));
+		try {
+			kafkaTemplate.send(KafkaTopicConfig.ORDER_STATUS_TOPIC, String.valueOf(order.getId()),
+					new OrderStatusChangedEvent(order.getUser().getId(), order.getId(), newStatus.name()));
+
+			System.out.println("Kafka message sent successfully.");
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw e;
+		}
 		Order saved = orderRepository.save(order);
 		return toResponse(saved);
 	}
