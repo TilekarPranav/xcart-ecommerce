@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import com.ecommerce.cart.entity.Cart;
 import com.ecommerce.cart.entity.CartItem;
 import com.ecommerce.cart.repository.CartRepository;
+import com.ecommerce.config.KafkaTopicConfig;
 import com.ecommerce.exception.BadRequestException;
 import com.ecommerce.exception.ResourceNotFoundException;
 import com.ecommerce.inventory.service.InventoryService;
@@ -37,8 +38,7 @@ public class OrderService {
 	private final CartRepository cartRepository;
 	private final UserRepository userRepository;
 	private final InventoryService inventoryService;
-	private final ApplicationEventPublisher eventPublisher;
-
+	private final org.springframework.kafka.core.KafkaTemplate<String, Object> kafkaTemplate;
 	private static final Map<OrderStatus, Set<OrderStatus>> ALLOWED_TRANSITIONS = Map.of(OrderStatus.PLACED,
 			Set.of(OrderStatus.CONFIRMED, OrderStatus.CANCELLED), OrderStatus.CONFIRMED,
 			Set.of(OrderStatus.SHIPPED, OrderStatus.CANCELLED), OrderStatus.SHIPPED, Set.of(OrderStatus.DELIVERED),
@@ -118,8 +118,8 @@ public class OrderService {
 		}
 
 		order.setStatus(newStatus);
-		eventPublisher
-				.publishEvent(new OrderStatusChangedEvent(order.getUser().getId(), order.getId(), newStatus.name()));
+		kafkaTemplate.send(KafkaTopicConfig.ORDER_STATUS_TOPIC, String.valueOf(order.getId()),
+				new OrderStatusChangedEvent(order.getUser().getId(), order.getId(), newStatus.name()));
 		Order saved = orderRepository.save(order);
 		return toResponse(saved);
 	}

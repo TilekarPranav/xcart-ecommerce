@@ -5,3 +5,4 @@ target/
 *.class
 application-local.properties
 .env
+src/main/resources/kafka-certs/
