@@ -43,6 +43,7 @@ public class OrderService {
 			Set.of(OrderStatus.CONFIRMED, OrderStatus.CANCELLED), OrderStatus.CONFIRMED,
 			Set.of(OrderStatus.SHIPPED, OrderStatus.CANCELLED), OrderStatus.SHIPPED, Set.of(OrderStatus.DELIVERED),
 			OrderStatus.DELIVERED, Set.of(), OrderStatus.CANCELLED, Set.of());
+	private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(OrderService.class);
 
 	@Transactional
 	public OrderResponse placeOrder(String email) {
@@ -118,19 +119,17 @@ public class OrderService {
 		}
 
 		order.setStatus(newStatus);
-		try {
-			kafkaTemplate
-					.send(KafkaTopicConfig.ORDER_STATUS_TOPIC, String.valueOf(order.getId()),
-							new OrderStatusChangedEvent(order.getUser().getId(), order.getId(), newStatus.name()))
-					.get();
-
-			System.out.println("Kafka message sent successfully");
-
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new RuntimeException(e);
-		}
 		Order saved = orderRepository.save(order);
+
+		// Fire-and-forget: a notification failure must never break order status
+		// updates.
+		try {
+			kafkaTemplate.send(KafkaTopicConfig.ORDER_STATUS_TOPIC, String.valueOf(order.getId()),
+					new OrderStatusChangedEvent(order.getUser().getId(), order.getId(), newStatus.name()));
+		} catch (Exception e) {
+			log.warn("Failed to publish order status event to Kafka for order {}", order.getId(), e);
+		}
+
 		return toResponse(saved);
 	}
 
