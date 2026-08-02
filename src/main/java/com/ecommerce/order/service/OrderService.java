@@ -44,6 +44,7 @@ public class OrderService {
 			Set.of(OrderStatus.SHIPPED, OrderStatus.CANCELLED), OrderStatus.SHIPPED, Set.of(OrderStatus.DELIVERED),
 			OrderStatus.DELIVERED, Set.of(), OrderStatus.CANCELLED, Set.of());
 	private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(OrderService.class);
+	private final OrderEventPublisher orderEventPublisher;
 
 	@Transactional
 	public OrderResponse placeOrder(String email) {
@@ -119,22 +120,14 @@ public class OrderService {
 		}
 
 		order.setStatus(newStatus);
-		Order saved = orderRepository.save(order);
 
-		publishOrderStatusEvent(order.getUser().getId(), order.getId(), newStatus.name());
+		orderEventPublisher.publishOrderStatusEvent(order.getUser().getId(), order.getId(), newStatus.name());
+		Order saved = orderRepository.save(order);
 
 		return toResponse(saved);
 	}
 
-	@org.springframework.scheduling.annotation.Async
-	public void publishOrderStatusEvent(Long userId, Long orderId, String newStatus) {
-		try {
-			kafkaTemplate.send(KafkaTopicConfig.ORDER_STATUS_TOPIC, String.valueOf(orderId),
-					new OrderStatusChangedEvent(userId, orderId, newStatus));
-		} catch (Exception e) {
-			log.warn("Failed to publish order status event to Kafka for order {}", orderId, e);
-		}
-	}
+	
 
 	@Transactional
 	public void cancelOrder(Long orderId, String email) {
