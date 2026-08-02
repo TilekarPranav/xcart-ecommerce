@@ -121,16 +121,19 @@ public class OrderService {
 		order.setStatus(newStatus);
 		Order saved = orderRepository.save(order);
 
-		// Fire-and-forget: a notification failure must never break order status
-		// updates.
-		try {
-			kafkaTemplate.send(KafkaTopicConfig.ORDER_STATUS_TOPIC, String.valueOf(order.getId()),
-					new OrderStatusChangedEvent(order.getUser().getId(), order.getId(), newStatus.name()));
-		} catch (Exception e) {
-			log.warn("Failed to publish order status event to Kafka for order {}", order.getId(), e);
-		}
+		publishOrderStatusEvent(order.getUser().getId(), order.getId(), newStatus.name());
 
 		return toResponse(saved);
+	}
+
+	@org.springframework.scheduling.annotation.Async
+	public void publishOrderStatusEvent(Long userId, Long orderId, String newStatus) {
+		try {
+			kafkaTemplate.send(KafkaTopicConfig.ORDER_STATUS_TOPIC, String.valueOf(orderId),
+					new OrderStatusChangedEvent(userId, orderId, newStatus));
+		} catch (Exception e) {
+			log.warn("Failed to publish order status event to Kafka for order {}", orderId, e);
+		}
 	}
 
 	@Transactional
