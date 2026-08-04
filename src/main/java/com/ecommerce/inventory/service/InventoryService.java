@@ -1,7 +1,6 @@
 package com.ecommerce.inventory.service;
 
 import org.springframework.dao.OptimisticLockingFailureException;
-import org.springframework.resilience.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
 import com.ecommerce.exception.BadRequestException;
@@ -28,23 +27,21 @@ public class InventoryService {
 		return toResponse(inventory);
 	}
 
-	@Retryable(includes = OptimisticLockingFailureException.class, maxRetries = 3)
 	@Transactional
 	public InventoryResponse updateStock(InventoryUpdateRequest request) {
-		int maxAttempts = 3;
-		int attempt = 0;
-
-		while (true) {
-			try {
-				return doUpdateStock(request);
-			} catch (OptimisticLockingFailureException ex) {
-				attempt++;
-				if (attempt >= maxAttempts) {
-					throw new BadRequestException(
-							"Could not update stock due to a conflicting update - please try again");
-				}
-			}
-		}
+	    int maxAttempts = 3;
+	    int attempt = 0;
+	    while (true) {
+	        try {
+	            return doUpdateStock(request);
+	        } catch (OptimisticLockingFailureException ex) {
+	            attempt++;
+	            if (attempt >= maxAttempts) {
+	                throw new BadRequestException(
+	                        "Could not update stock due to a conflicting update - please try again");
+	            }
+	        }
+	    }
 	}
 
 	private InventoryResponse doUpdateStock(InventoryUpdateRequest request) {
