@@ -63,7 +63,7 @@ public class SecurityConfig {
 	@Bean
 	public CorsConfigurationSource corsConfigurationSource() {
 		CorsConfiguration config = new CorsConfiguration();
-		config.setAllowedOrigins(List.of("*"));
+		config.setAllowedOrigins(List.of("https://x-cart.onrender.com", "http://localhost:5173"));
 		config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 		config.setAllowedHeaders(List.of("*"));
 		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
