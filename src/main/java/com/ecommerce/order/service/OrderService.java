@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -13,11 +12,9 @@ import org.springframework.stereotype.Service;
 import com.ecommerce.cart.entity.Cart;
 import com.ecommerce.cart.entity.CartItem;
 import com.ecommerce.cart.repository.CartRepository;
-import com.ecommerce.config.KafkaTopicConfig;
 import com.ecommerce.exception.BadRequestException;
 import com.ecommerce.exception.ResourceNotFoundException;
 import com.ecommerce.inventory.service.InventoryService;
-import com.ecommerce.notification.event.OrderStatusChangedEvent;
 import com.ecommerce.order.dto.OrderItemResponse;
 import com.ecommerce.order.dto.OrderResponse;
 import com.ecommerce.order.entity.Order;
@@ -38,12 +35,10 @@ public class OrderService {
 	private final CartRepository cartRepository;
 	private final UserRepository userRepository;
 	private final InventoryService inventoryService;
-	private final org.springframework.kafka.core.KafkaTemplate<String, Object> kafkaTemplate;
 	private static final Map<OrderStatus, Set<OrderStatus>> ALLOWED_TRANSITIONS = Map.of(OrderStatus.PLACED,
 			Set.of(OrderStatus.CONFIRMED, OrderStatus.CANCELLED), OrderStatus.CONFIRMED,
 			Set.of(OrderStatus.SHIPPED, OrderStatus.CANCELLED), OrderStatus.SHIPPED, Set.of(OrderStatus.DELIVERED),
 			OrderStatus.DELIVERED, Set.of(), OrderStatus.CANCELLED, Set.of());
-	private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(OrderService.class);
 	private final OrderEventPublisher orderEventPublisher;
 
 	@Transactional
