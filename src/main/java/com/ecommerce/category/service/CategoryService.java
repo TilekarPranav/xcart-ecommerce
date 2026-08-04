@@ -12,7 +12,7 @@ import com.ecommerce.exception.ConflictException;
 import com.ecommerce.exception.ResourceNotFoundException;
 import com.ecommerce.product.repository.ProductRepository;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service

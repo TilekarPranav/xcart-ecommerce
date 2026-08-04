@@ -22,7 +22,7 @@ import com.ecommerce.user.entity.User;
 import com.ecommerce.user.repository.RoleRepository;
 import com.ecommerce.user.repository.UserRepository;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service

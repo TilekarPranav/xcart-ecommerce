@@ -10,7 +10,7 @@ import com.ecommerce.inventory.dto.InventoryUpdateRequest;
 import com.ecommerce.inventory.entity.Inventory;
 import com.ecommerce.inventory.repository.InventoryRepository;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service

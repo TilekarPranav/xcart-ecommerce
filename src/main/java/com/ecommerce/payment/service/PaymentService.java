@@ -15,7 +15,7 @@ import com.ecommerce.payment.gateway.PaymentGateway;
 import com.ecommerce.payment.gateway.PaymentGatewayResult;
 import com.ecommerce.payment.repository.PaymentRepository;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
