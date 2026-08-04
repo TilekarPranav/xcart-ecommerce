@@ -9,8 +9,6 @@ import com.ecommerce.inventory.dto.InventoryResponse;
 import com.ecommerce.inventory.dto.InventoryUpdateRequest;
 import com.ecommerce.inventory.entity.Inventory;
 import com.ecommerce.inventory.repository.InventoryRepository;
-import com.ecommerce.product.entity.Product;
-import com.ecommerce.product.repository.ProductRepository;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +18,6 @@ import lombok.RequiredArgsConstructor;
 public class InventoryService {
 
 	private final InventoryRepository inventoryRepository;
-	private final ProductRepository productRepository;
 
 	public InventoryResponse getByProductId(Long id) {
 		Inventory inventory = findByProductIdOrThrow(id);
@@ -29,19 +26,19 @@ public class InventoryService {
 
 	@Transactional
 	public InventoryResponse updateStock(InventoryUpdateRequest request) {
-	    int maxAttempts = 3;
-	    int attempt = 0;
-	    while (true) {
-	        try {
-	            return doUpdateStock(request);
-	        } catch (OptimisticLockingFailureException ex) {
-	            attempt++;
-	            if (attempt >= maxAttempts) {
-	                throw new BadRequestException(
-	                        "Could not update stock due to a conflicting update - please try again");
-	            }
-	        }
-	    }
+		int maxAttempts = 3;
+		int attempt = 0;
+		while (true) {
+			try {
+				return doUpdateStock(request);
+			} catch (OptimisticLockingFailureException ex) {
+				attempt++;
+				if (attempt >= maxAttempts) {
+					throw new BadRequestException(
+							"Could not update stock due to a conflicting update - please try again");
+				}
+			}
+		}
 	}
 
 	private InventoryResponse doUpdateStock(InventoryUpdateRequest request) {
@@ -86,11 +83,6 @@ public class InventoryService {
 	private Inventory findByProductIdOrThrow(Long productId) {
 		return inventoryRepository.findByProductId(productId).orElseThrow(
 				() -> new ResourceNotFoundException("No inventory record found for product id:" + productId));
-	}
-
-	private Product findProductOrThrow(Long productId) {
-		return productRepository.findById(productId)
-				.orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
 	}
 
 	private InventoryResponse toResponse(Inventory inventory) {
