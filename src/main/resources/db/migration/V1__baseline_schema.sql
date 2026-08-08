@@ -2,7 +2,6 @@
 -- PostgreSQL database dump
 --
 
-\restrict uEr4m2dyHheMBhfDiyKaVQQLBui1dgYmZlaYmm4HqXYr2maFK6oSF3CiCVsX5WB
 
 -- Dumped from database version 18.4 (Debian 18.4-1.pgdg12+1)
 -- Dumped by pg_dump version 18.4 (Ubuntu 18.4-1.pgdg24.04+1)
@@ -643,5 +642,4 @@ ALTER TABLE ONLY public.inventory
 -- PostgreSQL database dump complete
 --
 
-\unrestrict uEr4m2dyHheMBhfDiyKaVQQLBui1dgYmZlaYmm4HqXYr2maFK6oSF3CiCVsX5WB
 
