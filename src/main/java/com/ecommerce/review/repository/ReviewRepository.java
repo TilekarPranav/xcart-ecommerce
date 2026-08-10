@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.Modifying;
 
 import com.ecommerce.review.entity.Review;
 
@@ -21,5 +22,9 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
 	@Query("SELECT COUNT(r) FROM Review r WHERE r.product.id = :productId")
 	Long countByProductId(@Param("productId") Long productId);
+
+	@Modifying
+	@Query("DELETE FROM Review r WHERE r.user.id = :userId")
+	void deleteByUserId(@Param("userId") Long userId);
 
 }

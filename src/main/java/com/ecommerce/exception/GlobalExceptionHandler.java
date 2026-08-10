@@ -76,4 +76,12 @@ public class GlobalExceptionHandler {
 				.body(ApiResponse.error("Invalid value for parameter: " + ex.getName()));
 	}
 
+	@ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+	public ResponseEntity<ApiResponse<Void>> handleDataIntegrity(
+			org.springframework.dao.DataIntegrityViolationException ex) {
+		log.error("Data integrity violation", ex);
+		return ResponseEntity.status(HttpStatus.CONFLICT)
+				.body(ApiResponse.error("Cannot delete or modify this resource — it has related records."));
+	}
+
 }

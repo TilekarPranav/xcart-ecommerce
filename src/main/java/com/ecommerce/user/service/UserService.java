@@ -16,6 +16,12 @@ import com.ecommerce.user.dto.UserProfileResponse;
 import com.ecommerce.user.entity.Role;
 import com.ecommerce.user.entity.User;
 import com.ecommerce.user.repository.UserRepository;
+import com.ecommerce.cart.repository.CartRepository;
+import com.ecommerce.notification.repository.NotificationRepository;
+import com.ecommerce.order.entity.Order;
+import com.ecommerce.order.repository.OrderRepository;
+import com.ecommerce.payment.repository.PaymentRepository;
+import com.ecommerce.review.repository.ReviewRepository;
 
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +32,11 @@ public class UserService {
 
 	private final UserRepository userRepository;
 	private final PasswordEncoder passwordEncoder;
+	private final CartRepository cartRepository;
+	private final OrderRepository orderRepository;
+	private final PaymentRepository paymentRepository;
+	private final ReviewRepository reviewRepository;
+	private final NotificationRepository notificationRepository;
 
 	public UserProfileResponse getProfile(String email) {
 		User user = findByEmailOrThrow(email);
@@ -72,6 +83,21 @@ public class UserService {
 	@Transactional
 	public void deleteUser(Long userId) {
 		User user = findByIdOrThrow(userId);
+
+		cartRepository.findByUserId(userId).ifPresent(cartRepository::delete);
+		var userOrders = orderRepository.findByUserId(userId, org.springframework.data.domain.PageRequest.of(0, 1000));
+		for (Order order : userOrders.getContent()) {
+			paymentRepository.findByOrderId(order.getId()).ifPresent(paymentRepository::delete);
+		}
+
+		orderRepository.deleteAll(userOrders.getContent());
+
+		reviewRepository.deleteByUserId(userId);
+
+		notificationRepository.deleteByUserId(userId);
+
+		user.getRoles().clear();
+
 		userRepository.delete(user);
 	}
 
