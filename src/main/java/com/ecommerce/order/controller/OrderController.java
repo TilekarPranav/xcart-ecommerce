@@ -2,7 +2,7 @@ package com.ecommerce.order.controller;
 
 import com.ecommerce.common.ApiResponse;
 import com.ecommerce.order.dto.OrderResponse;
-import com.ecommerce.order.dto.UpdateOrderStatusRequest;
+import com.ecommerce.order.dto.PlaceOrderRequest;
 import com.ecommerce.order.service.OrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,8 +21,9 @@ public class OrderController {
 	private final OrderService orderService;
 
 	@PostMapping
-	public ResponseEntity<ApiResponse<OrderResponse>> placeOrder(Authentication authentication) {
-		OrderResponse response = orderService.placeOrder(authentication.getName());
+	public ResponseEntity<ApiResponse<OrderResponse>> placeOrder(Authentication authentication,
+			@Valid @RequestBody PlaceOrderRequest request) {
+		OrderResponse response = orderService.placeOrder(authentication.getName(), request);
 		return ResponseEntity.status(HttpStatus.CREATED)
 				.body(ApiResponse.success(response, "Order placed successfully"));
 	}

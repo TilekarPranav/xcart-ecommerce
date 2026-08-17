@@ -39,6 +39,10 @@ public class CartService {
 		Product product = productRepository.findById(request.getProductId()).orElseThrow(
 				() -> new ResourceNotFoundException("Product not found with id: " + request.getProductId()));
 
+		if (!product.isActive()) {
+			throw new ResourceNotFoundException("Product not found with id: " + request.getProductId());
+		}
+
 		checkStockAvailable(product.getId(), request.getQuantity());
 
 		CartItem existingItem = cart.getItems().stream()

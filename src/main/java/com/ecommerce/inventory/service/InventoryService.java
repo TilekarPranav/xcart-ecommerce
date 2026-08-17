@@ -4,6 +4,7 @@ import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
 import com.ecommerce.exception.BadRequestException;
+import com.ecommerce.exception.ConflictException;
 import com.ecommerce.exception.ResourceNotFoundException;
 import com.ecommerce.inventory.dto.InventoryResponse;
 import com.ecommerce.inventory.dto.InventoryUpdateRequest;
@@ -62,6 +63,23 @@ public class InventoryService {
 
 	@Transactional
 	public void decreaseStockForOrder(Long productId, int amount) {
+		int maxAttempts = 3;
+		int attempt = 0;
+		while (true) {
+			try {
+				doDecreaseStockForOrder(productId, amount);
+				return;
+			} catch (OptimisticLockingFailureException ex) {
+				attempt++;
+				if (attempt >= maxAttempts) {
+					throw new ConflictException(
+							"This item just sold out or is being purchased by someone else — please try again");
+				}
+			}
+		}
+	}
+
+	private void doDecreaseStockForOrder(Long productId, int amount) {
 		Inventory inventory = findByProductIdOrThrow(productId);
 		int newQuantity = inventory.getQuantity() - amount;
 

@@ -42,11 +42,15 @@ public class JwtService {
 	}
 
 	public String generateAccessToken(UserDetails userDetails) {
-		return buildToken(new HashMap<>(), userDetails, accessTokenExpirationMs);
+		return buildToken(Map.of("type", "access"), userDetails, accessTokenExpirationMs);
 	}
 
 	public String generateRefreshToken(UserDetails userDetails) {
-		return buildToken(new HashMap<>(), userDetails, refreshTokenExpirationMs);
+		return buildToken(Map.of("type", "refresh"), userDetails, refreshTokenExpirationMs);
+	}
+
+	public String extractTokenType(String token) {
+		return extractClaim(token, claims -> claims.get("type", String.class));
 	}
 
 	private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {

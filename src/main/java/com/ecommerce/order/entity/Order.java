@@ -48,6 +48,20 @@ public class Order {
 	@Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
 	private BigDecimal totalAmount;
 
+	@Builder.Default
+	@Column(name = "shipping_amount", nullable = false, precision = 10, scale = 2)
+	private BigDecimal shippingAmount = BigDecimal.ZERO;
+
+	@Builder.Default
+	@Column(name = "tax_amount", nullable = false, precision = 10, scale = 2)
+	private BigDecimal taxAmount = BigDecimal.ZERO;
+
+	@Column(name = "shipping_method")
+	private String shippingMethod;
+
+	@Column(name = "shipping_address", length = 500)
+	private String shippingAddress;
+
 	@OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
 	@Builder.Default
 	private List<OrderItem> items = new ArrayList<>();

@@ -37,7 +37,7 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/ecommerce
       DB_USERNAME: ${DB_USERNAME:-postgres}
       DB_PASSWORD: ${DB_PASSWORD:-root}
-      JWT_SECRET: ${JWT_SECRET:-ZWNvbW1lcmNlLXN1cGVyLXNlY3JldC1rZXktY2hhbmdlLW1lLWluLXByb2R1Y3Rpb24tcGxlYXNlLTEyMzQ1Ng==}
+	  JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in your .env file — see .env.example}
       CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
       CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
       CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}

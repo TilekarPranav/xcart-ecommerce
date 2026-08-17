@@ -90,9 +90,6 @@
 //	}
 //}
 
-
-
-
 package com.ecommerce.config;
 
 import java.io.IOException;
@@ -114,6 +111,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -143,30 +141,30 @@ public class SecurityConfig {
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http.csrf(csrf -> csrf.disable())
-			.cors(cors -> {})
-			.authorizeHttpRequests(auth -> auth
-				.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-				.requestMatchers(PUBLIC_ENDPOINTS).permitAll()
-				.requestMatchers(HttpMethod.GET, "/products/*/reviews", "/products/*/reviews/average").permitAll()
-				.requestMatchers(HttpMethod.POST, "/products/*/reviews").authenticated()
-				.requestMatchers(HttpMethod.POST, "/products/images/**").hasRole("ADMIN")
-				.requestMatchers(HttpMethod.GET, "/inventory/**").permitAll()
-				.requestMatchers(HttpMethod.PUT, "/inventory/**").hasRole("ADMIN")
-				.requestMatchers(HttpMethod.GET, "/products/**").permitAll()
-				.requestMatchers(HttpMethod.POST, "/products/**").hasRole("ADMIN")
-				.requestMatchers(HttpMethod.PUT, "/products/**").hasRole("ADMIN")
-				.requestMatchers(HttpMethod.DELETE, "/products/**").hasRole("ADMIN")
-				.requestMatchers(HttpMethod.GET, "/categories/**").permitAll()
-				.requestMatchers(HttpMethod.POST, "/categories/**").hasRole("ADMIN")
-				.requestMatchers(HttpMethod.PUT, "/categories/**").hasRole("ADMIN")
-				.requestMatchers(HttpMethod.DELETE, "/categories/**").hasRole("ADMIN")
-				.requestMatchers("/admin/**").hasRole("ADMIN")
-				.anyRequest().authenticated()
-			)
-			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-			.authenticationProvider(authenticationProvider())
-			.exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint()))
-			.addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class);
+				.csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+						.ignoringRequestMatchers("/auth/login", "/auth/register"))
+				.cors(cors -> {
+				})
+				.authorizeHttpRequests(auth -> auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+						.requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+						.requestMatchers(HttpMethod.GET, "/products/*/reviews", "/products/*/reviews/average")
+						.permitAll().requestMatchers(HttpMethod.POST, "/products/*/reviews").authenticated()
+						.requestMatchers(HttpMethod.POST, "/products/images/**").hasRole("ADMIN")
+						.requestMatchers(HttpMethod.GET, "/inventory/**").permitAll()
+						.requestMatchers(HttpMethod.PUT, "/inventory/**").hasRole("ADMIN")
+						.requestMatchers(HttpMethod.GET, "/products/**").permitAll()
+						.requestMatchers(HttpMethod.POST, "/products/**").hasRole("ADMIN")
+						.requestMatchers(HttpMethod.PUT, "/products/**").hasRole("ADMIN")
+						.requestMatchers(HttpMethod.DELETE, "/products/**").hasRole("ADMIN")
+						.requestMatchers(HttpMethod.GET, "/categories/**").permitAll()
+						.requestMatchers(HttpMethod.POST, "/categories/**").hasRole("ADMIN")
+						.requestMatchers(HttpMethod.PUT, "/categories/**").hasRole("ADMIN")
+						.requestMatchers(HttpMethod.DELETE, "/categories/**").hasRole("ADMIN")
+						.requestMatchers("/admin/**").hasRole("ADMIN").anyRequest().authenticated())
+				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+				.authenticationProvider(authenticationProvider())
+				.exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint()))
+				.addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class);
 		return http.build();
 	}
 
@@ -213,4 +211,3 @@ public class SecurityConfig {
 		return new BCryptPasswordEncoder();
 	}
 }
-

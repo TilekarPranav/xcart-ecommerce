@@ -35,9 +35,8 @@ public class ProductImageController {
 			throw new BadRequestException("File is empty");
 		}
 
-		String contentType = file.getContentType();
-		if (contentType == null || !contentType.startsWith("image/")) {
-			throw new BadRequestException("Only image files are allowed");
+		if (!isAllowedImage(file)) {
+			throw new BadRequestException("Only JPEG, PNG, GIF, or WEBP image files are allowed");
 		}
 
 		try {
@@ -47,6 +46,33 @@ public class ProductImageController {
 			return ResponseEntity.ok(ApiResponse.success(url, "Image uploaded"));
 		} catch (IOException e) {
 			throw new RuntimeException("Failed to upload image", e);
+		}
+	}
+
+	private boolean isAllowedImage(MultipartFile file) {
+		try {
+			byte[] header = new byte[12];
+			int read = file.getInputStream().read(header);
+			if (read < 4)
+				return false;
+
+			// JPEG: FF D8 FF
+			if ((header[0] & 0xFF) == 0xFF && (header[1] & 0xFF) == 0xD8 && (header[2] & 0xFF) == 0xFF)
+				return true;
+			// PNG: 89 50 4E 47
+			if ((header[0] & 0xFF) == 0x89 && header[1] == 'P' && header[2] == 'N' && header[3] == 'G')
+				return true;
+			// GIF: GIF87a / GIF89a
+			if (header[0] == 'G' && header[1] == 'I' && header[2] == 'F')
+				return true;
+			// WEBP: "RIFF"...."WEBP"
+			if (read >= 12 && header[0] == 'R' && header[1] == 'I' && header[2] == 'F' && header[3] == 'F'
+					&& header[8] == 'W' && header[9] == 'E' && header[10] == 'B' && header[11] == 'P')
+				return true;
+
+			return false;
+		} catch (IOException e) {
+			return false;
 		}
 	}
 }

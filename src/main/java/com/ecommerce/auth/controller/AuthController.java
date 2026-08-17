@@ -1,8 +1,11 @@
 package com.ecommerce.auth.controller;
 
 import org.springframework.security.core.Authentication;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -16,6 +19,7 @@ import com.ecommerce.auth.dto.UserSummaryResponse;
 import com.ecommerce.auth.service.AuthService;
 import com.ecommerce.common.ApiResponse;
 
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -34,14 +38,36 @@ public class AuthController {
 	}
 
 	@PostMapping("/login")
-	public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
-		AuthResponse response = authService.login(request);
-		return ResponseEntity.ok(ApiResponse.success(response, "Login successful"));
+	public ResponseEntity<ApiResponse<UserSummaryResponse>> login(@Valid @RequestBody LoginRequest request,
+			HttpServletResponse response) {
+		AuthResponse tokens = authService.login(request);
+		addAuthCookies(response, tokens);
+		return ResponseEntity.ok(ApiResponse.success(authService.me(tokens.getEmail()), "Login successful"));
+	}
+
+	private void addAuthCookies(HttpServletResponse response, AuthResponse tokens) {
+		ResponseCookie access = ResponseCookie.from("accessToken", tokens.getAccessToken()).httpOnly(true).secure(true)
+				.sameSite("Strict").path("/").maxAge(15 * 60).build();
+		ResponseCookie refresh = ResponseCookie.from("refreshToken", tokens.getRefreshToken()).httpOnly(true)
+				.secure(true).sameSite("Strict").path("/auth/refresh").maxAge(7 * 24 * 60 * 60).build();
+		response.addHeader(HttpHeaders.SET_COOKIE, access.toString());
+		response.addHeader(HttpHeaders.SET_COOKIE, refresh.toString());
 	}
 
 	@GetMapping("/me")
 	public ResponseEntity<ApiResponse<UserSummaryResponse>> me(Authentication authentication) {
 		UserSummaryResponse response = authService.me(authentication.getName());
 		return ResponseEntity.ok(ApiResponse.success(response));
+	}
+	
+	@PostMapping("/refresh")
+	public ResponseEntity<ApiResponse<Void>> refresh(@CookieValue(name = "refreshToken", required = false) String refreshToken,
+			HttpServletResponse response) {
+		if (refreshToken == null) {
+			throw new com.ecommerce.exception.BadRequestException("No refresh token provided");
+		}
+		AuthResponse tokens = authService.refresh(refreshToken);
+		addAuthCookies(response, tokens);
+		return ResponseEntity.ok(ApiResponse.success(null, "Token refreshed"));
 	}
 }

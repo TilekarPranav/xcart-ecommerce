@@ -85,4 +85,20 @@ public class AuthService {
 		return AuthResponse.builder().accessToken(accessToken).refreshToken(refreshToken).tokenType("Bearer")
 				.userId(user.getId()).name(user.getName()).email(user.getEmail()).build();
 	}
+
+	public AuthResponse refresh(String refreshToken) {
+		if (!"refresh".equals(jwtService.extractTokenType(refreshToken))) {
+			throw new com.ecommerce.exception.BadRequestException("Invalid token type");
+		}
+		String email = jwtService.extractEmail(refreshToken);
+		UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+		if (!jwtService.isTokenValid(refreshToken, userDetails)) {
+			throw new com.ecommerce.exception.BadRequestException("Refresh token expired or invalid");
+		}
+		User user = userRepository.findByEmail(email)
+				.orElseThrow(() -> new IllegalStateException("Authenticated user not found in DB"));
+		String newAccessToken = jwtService.generateAccessToken(userDetails);
+		String newRefreshToken = jwtService.generateRefreshToken(userDetails);
+		return buildAuthResponse(user, newAccessToken, newRefreshToken);
+	}
 }

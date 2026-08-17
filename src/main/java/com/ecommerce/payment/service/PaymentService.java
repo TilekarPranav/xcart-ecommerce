@@ -27,11 +27,15 @@ public class PaymentService {
 	private final PaymentGateway paymentGateway;
 
 	@Transactional
-	public PaymentResponse processPayment(Long orderId) {
+	public PaymentResponse processPayment(Long orderId, String email) {
 		Order order = orderRepository.findById(orderId)
 				.orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
 
-		if (paymentRepository.findById(orderId).isPresent()) {
+		if (!order.getUser().getEmail().equals(email)) {
+			throw new ResourceNotFoundException("Order not found with id: " + orderId);
+		}
+
+		if (paymentRepository.findByOrderId(orderId).isPresent()) {
 			throw new ConflictException("A payment already exists for this order");
 		}
 
@@ -59,9 +63,14 @@ public class PaymentService {
 
 	}
 
-	public PaymentResponse getByOrderId(Long orderId) {
+	public PaymentResponse getByOrderId(Long orderId, String email, boolean isAdmin) {
 		Payment payment = paymentRepository.findByOrderId(orderId)
 				.orElseThrow(() -> new ResourceNotFoundException("No payment found for order id: " + orderId));
+
+		if (!isAdmin && !payment.getOrder().getUser().getEmail().equals(email)) {
+			throw new ResourceNotFoundException("No payment found for order id: " + orderId);
+		}
+
 		return toResponse(payment);
 	}
 

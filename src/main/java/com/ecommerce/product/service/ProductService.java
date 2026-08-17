@@ -65,7 +65,11 @@ public class ProductService {
 	}
 
 	public ProductResponse getById(Long id) {
-		return toResponse(findByIdOrThrow(id));
+		Product product = findByIdOrThrow(id);
+		if (!product.isActive()) {
+			throw new ResourceNotFoundException("Product not found with id: " + id);
+		}
+		return toResponse(product);
 	}
 
 	public Page<ProductResponse> search(String name, Long categoryId, BigDecimal minPrice, BigDecimal maxPrice,

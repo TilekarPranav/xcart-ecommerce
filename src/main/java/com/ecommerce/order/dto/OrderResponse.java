@@ -18,6 +18,10 @@ public class OrderResponse {
 	private Long id;
 	private OrderStatus status;
 	private BigDecimal totalAmount;
+	private BigDecimal shippingAmount;
+	private BigDecimal taxAmount;
+	private String shippingMethod;
+	private String shippingAddress;
 	private List<OrderItemResponse> items;
 	private Instant createdAt;
 }

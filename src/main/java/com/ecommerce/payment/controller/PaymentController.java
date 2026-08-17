@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
 
 @RestController
 @RequestMapping("/payments")
@@ -17,13 +18,17 @@ public class PaymentController {
 	private final PaymentService paymentService;
 
 	@PostMapping
-	public ResponseEntity<ApiResponse<PaymentResponse>> processPayment(@Valid @RequestBody PaymentRequest request) {
-		PaymentResponse response = paymentService.processPayment(request.getOrderId());
+	public ResponseEntity<ApiResponse<PaymentResponse>> processPayment(Authentication authentication,
+			@Valid @RequestBody PaymentRequest request) {
+		PaymentResponse response = paymentService.processPayment(request.getOrderId(), authentication.getName());
 		return ResponseEntity.ok(ApiResponse.success(response, "Payment processed"));
 	}
 
 	@GetMapping("/{orderId}")
-	public ResponseEntity<ApiResponse<PaymentResponse>> getByOrderId(@PathVariable Long orderId) {
-		return ResponseEntity.ok(ApiResponse.success(paymentService.getByOrderId(orderId)));
+	public ResponseEntity<ApiResponse<PaymentResponse>> getByOrderId(Authentication authentication,
+			@PathVariable Long orderId) {
+		boolean isAdmin = authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+		return ResponseEntity
+				.ok(ApiResponse.success(paymentService.getByOrderId(orderId, authentication.getName(), isAdmin)));
 	}
 }
