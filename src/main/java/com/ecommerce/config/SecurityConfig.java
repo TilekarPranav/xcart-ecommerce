@@ -134,6 +134,7 @@ public class SecurityConfig {
 
 	private final CustomUserDetailsService userDetailsService;
 	private final JwtAuthenticationFilter authenticationFilter;
+	private final ObjectMapper objectMapper;
 
 	private static final String[] PUBLIC_ENDPOINTS = { "/auth/register", "/auth/login", "/swagger-ui/**",
 			"/swagger-ui.html", "/api-docs/**", "/v3/api-docs/**" };
@@ -176,7 +177,7 @@ public class SecurityConfig {
 					org.springframework.security.core.AuthenticationException authException) throws IOException {
 				response.setStatus(HttpStatus.UNAUTHORIZED.value());
 				response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-				response.getWriter().write(new ObjectMapper().writeValueAsString(
+				response.getWriter().write(objectMapper.writeValueAsString(
 						ApiResponse.error("Authentication required. Please provide a valid JWT token.")));
 			}
 		};
