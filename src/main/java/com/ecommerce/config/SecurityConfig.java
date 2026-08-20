@@ -118,8 +118,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ecommerce.common.ApiResponse;
 import com.ecommerce.security.CustomUserDetailsService;
 import com.ecommerce.security.JwtAuthenticationFilter;
 
@@ -134,16 +132,16 @@ public class SecurityConfig {
 
 	private final CustomUserDetailsService userDetailsService;
 	private final JwtAuthenticationFilter authenticationFilter;
-	private final ObjectMapper objectMapper;
 
-	private static final String[] PUBLIC_ENDPOINTS = { "/auth/register", "/auth/login", "/swagger-ui/**",
-			"/swagger-ui.html", "/api-docs/**", "/v3/api-docs/**" };
+	private static final String[] PUBLIC_ENDPOINTS = { "/auth/register", "/auth/login", "/auth/refresh",
+			"/auth/logout", "/swagger-ui/**", "/swagger-ui.html", "/api-docs/**", "/v3/api-docs/**" };
 
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-		http.csrf(csrf -> csrf.disable())
-				.csrf(csrf -> csrf.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-						.ignoringRequestMatchers("/auth/login", "/auth/register"))
+		CookieCsrfTokenRepository csrfTokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+		csrfTokenRepository.setCookieCustomizer(cookie -> cookie.sameSite("None").secure(true));
+		http.csrf(csrf -> csrf.csrfTokenRepository(csrfTokenRepository)
+						.ignoringRequestMatchers("/auth/login", "/auth/register", "/auth/refresh", "/auth/logout"))
 				.cors(cors -> {
 				})
 				.authorizeHttpRequests(auth -> auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
@@ -177,8 +175,14 @@ public class SecurityConfig {
 					org.springframework.security.core.AuthenticationException authException) throws IOException {
 				response.setStatus(HttpStatus.UNAUTHORIZED.value());
 				response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-				response.getWriter().write(objectMapper.writeValueAsString(
-						ApiResponse.error("Authentication required. Please provide a valid JWT token.")));
+				response.setCharacterEncoding("UTF-8");
+				// Hand-written rather than serialized via ApiResponse/an ObjectMapper bean:
+				// this response's shape is fixed, and different Spring Boot versions here
+				// have swapped which Jackson major version's ObjectMapper/JsonMapper bean
+				// actually exists — depending on either was the whole problem.
+				String body = "{\"success\":false,\"message\":\"Authentication required. Please provide a valid "
+						+ "JWT token.\",\"timestamp\":\"" + java.time.Instant.now() + "\"}";
+				response.getWriter().write(body);
 			}
 		};
 	}
@@ -189,6 +193,7 @@ public class SecurityConfig {
 		config.setAllowedOrigins(List.of("https://x-cart.onrender.com", "http://localhost:5173"));
 		config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 		config.setAllowedHeaders(List.of("*"));
+		config.setAllowCredentials(true);
 		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 		source.registerCorsConfiguration("/**", config);
 		return source;

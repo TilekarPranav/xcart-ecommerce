@@ -31,10 +31,12 @@ public class AuthController {
 	private final AuthService authService;
 
 	@PostMapping("/register")
-	public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
-		AuthResponse response = authService.register(request);
+	public ResponseEntity<ApiResponse<UserSummaryResponse>> register(@Valid @RequestBody RegisterRequest request,
+			HttpServletResponse response) {
+		AuthResponse tokens = authService.register(request);
+		addAuthCookies(response, tokens);
 		return ResponseEntity.status(HttpStatus.CREATED)
-				.body(ApiResponse.success(response, "Account created successfully"));
+				.body(ApiResponse.success(authService.me(tokens.getEmail()), "Account created successfully"));
 	}
 
 	@PostMapping("/login")
@@ -69,5 +71,19 @@ public class AuthController {
 		AuthResponse tokens = authService.refresh(refreshToken);
 		addAuthCookies(response, tokens);
 		return ResponseEntity.ok(ApiResponse.success(null, "Token refreshed"));
+	}
+
+	@PostMapping("/logout")
+	public ResponseEntity<ApiResponse<Void>> logout(HttpServletResponse response) {
+		// httpOnly cookies can't be cleared by client-side JS — this endpoint is the
+		// only way to actually end the session. maxAge(0) tells the browser to
+		// delete the cookie immediately.
+		ResponseCookie access = ResponseCookie.from("accessToken", "").httpOnly(true).secure(true).sameSite("None")
+				.path("/").maxAge(0).build();
+		ResponseCookie refresh = ResponseCookie.from("refreshToken", "").httpOnly(true).secure(true).sameSite("None")
+				.path("/auth/refresh").maxAge(0).build();
+		response.addHeader(HttpHeaders.SET_COOKIE, access.toString());
+		response.addHeader(HttpHeaders.SET_COOKIE, refresh.toString());
+		return ResponseEntity.ok(ApiResponse.success(null, "Logged out"));
 	}
 }
