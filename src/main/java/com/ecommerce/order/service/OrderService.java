@@ -91,6 +91,8 @@ public class OrderService {
 		cart.getItems().clear();
 		cartRepository.save(cart);
 
+		orderEventPublisher.publishOrderStatusEvent(saved.getUser().getId(), saved.getId(), saved.getStatus().name());
+
 		return toResponse(saved);
 	}
 
