@@ -31,35 +31,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	protected void doFilterInternal(@NotNull HttpServletRequest request, @NotNull HttpServletResponse response,
 			@NotNull FilterChain filterChain) throws ServletException, IOException {
 
-		final String authHeader = request.getHeader("Authorization");
+		final String jwt = extractToken(request);
 
-		if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-			filterChain.doFilter(request, response);
-			return;
-		}
+		if (jwt != null) {
+			try {
+				final String userEmail = jwtService.extractEmail(jwt);
 
-		try {
-			final String jwt = authHeader.substring(7);
-			final String userEmail = jwtService.extractEmail(jwt);
+				if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+					UserDetails userDetails = customUserDetailsService.loadUserByUsername(userEmail);
 
-			if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-				UserDetails userDetails = customUserDetailsService.loadUserByUsername(userEmail);
-
-				if (jwtService.isTokenValid(jwt, userDetails)) {
-					UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(userDetails,
-							null, userDetails.getAuthorities());
-					token.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-					SecurityContextHolder.getContext().setAuthentication(token);
+					if (jwtService.isTokenValid(jwt, userDetails)) {
+						UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(userDetails,
+								null, userDetails.getAuthorities());
+						token.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+						SecurityContextHolder.getContext().setAuthentication(token);
+					}
 				}
+			} catch (io.jsonwebtoken.ExpiredJwtException e) {
+				log.debug("Expired JWT token for request to {}", request.getRequestURI());
+			} catch (io.jsonwebtoken.JwtException e) {
+				log.debug("Invalid JWT token for request to {}: {}", request.getRequestURI(), e.getMessage());
 			}
-		} catch (io.jsonwebtoken.ExpiredJwtException e) {
-			log.debug("Expired JWT token for request to {}", request.getRequestURI());
-		} catch (io.jsonwebtoken.JwtException e) {
-			log.debug("Invalid JWT token for request to {}: {}", request.getRequestURI(), e.getMessage());
 		}
 
 		filterChain.doFilter(request, response);
-
 	}
 	
 	private String extractToken(HttpServletRequest request) {

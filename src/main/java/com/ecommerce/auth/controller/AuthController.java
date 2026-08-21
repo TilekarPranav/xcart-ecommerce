@@ -49,9 +49,9 @@ public class AuthController {
 
 	private void addAuthCookies(HttpServletResponse response, AuthResponse tokens) {
 		ResponseCookie access = ResponseCookie.from("accessToken", tokens.getAccessToken()).httpOnly(true).secure(true)
-				.sameSite("None").path("/").maxAge(15 * 60).build();
+				.sameSite("None").partitioned().path("/").maxAge(15 * 60).build();
 		ResponseCookie refresh = ResponseCookie.from("refreshToken", tokens.getRefreshToken()).httpOnly(true)
-				.secure(true).sameSite("None").path("/auth/refresh").maxAge(7 * 24 * 60 * 60).build();
+				.secure(true).sameSite("None").partitioned().path("/auth/refresh").maxAge(7 * 24 * 60 * 60).build();
 		response.addHeader(HttpHeaders.SET_COOKIE, access.toString());
 		response.addHeader(HttpHeaders.SET_COOKIE, refresh.toString());
 	}
@@ -79,9 +79,9 @@ public class AuthController {
 		// only way to actually end the session. maxAge(0) tells the browser to
 		// delete the cookie immediately.
 		ResponseCookie access = ResponseCookie.from("accessToken", "").httpOnly(true).secure(true).sameSite("None")
-				.path("/").maxAge(0).build();
+				.partitioned().path("/").maxAge(0).build();
 		ResponseCookie refresh = ResponseCookie.from("refreshToken", "").httpOnly(true).secure(true).sameSite("None")
-				.path("/auth/refresh").maxAge(0).build();
+				.partitioned().path("/auth/refresh").maxAge(0).build();
 		response.addHeader(HttpHeaders.SET_COOKIE, access.toString());
 		response.addHeader(HttpHeaders.SET_COOKIE, refresh.toString());
 		return ResponseEntity.ok(ApiResponse.success(null, "Logged out"));

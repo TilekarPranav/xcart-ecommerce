@@ -134,12 +134,14 @@ public class SecurityConfig {
 	private final JwtAuthenticationFilter authenticationFilter;
 
 	private static final String[] PUBLIC_ENDPOINTS = { "/auth/register", "/auth/login", "/auth/refresh",
-			"/auth/logout", "/swagger-ui/**", "/swagger-ui.html", "/api-docs/**", "/v3/api-docs/**" };
+			"/auth/logout", "/swagger-ui/**", "/swagger-ui.html", "/api-docs/**", "/v3/api-docs/**",
+			"/", "/index.html", "/login", "/cart", "/checkout", "/products", "/categories", "/static/**", "/assets/**",
+			"/*.js", "/*.css", "/*.ico", "/*.png", "/*.svg", "/*.json", "/error" };
 
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		CookieCsrfTokenRepository csrfTokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
-		csrfTokenRepository.setCookieCustomizer(cookie -> cookie.sameSite("None").secure(true));
+		csrfTokenRepository.setCookieCustomizer(cookie -> cookie.sameSite("None").secure(true).partitioned(true));
 		http.csrf(csrf -> csrf.csrfTokenRepository(csrfTokenRepository)
 						.ignoringRequestMatchers("/auth/login", "/auth/register", "/auth/refresh", "/auth/logout"))
 				.cors(cors -> {
