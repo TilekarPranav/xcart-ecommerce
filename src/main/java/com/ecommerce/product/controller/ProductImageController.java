@@ -39,13 +39,17 @@ public class ProductImageController {
 			throw new BadRequestException("Only JPEG, PNG, GIF, or WEBP image files are allowed");
 		}
 
+		if (cloudName == null || cloudName.isBlank() || apiKey == null || apiKey.isBlank()) {
+			throw new BadRequestException("Cloudinary credentials are not configured on the server");
+		}
+
 		try {
 			Map uploadResult = cloudinary().uploader().upload(file.getBytes(),
 					ObjectUtils.asMap("folder", "xcart-products"));
 			String url = (String) uploadResult.get("secure_url");
 			return ResponseEntity.ok(ApiResponse.success(url, "Image uploaded"));
-		} catch (IOException e) {
-			throw new RuntimeException("Failed to upload image", e);
+		} catch (Exception e) {
+			throw new BadRequestException("Failed to upload image: " + e.getMessage());
 		}
 	}
 

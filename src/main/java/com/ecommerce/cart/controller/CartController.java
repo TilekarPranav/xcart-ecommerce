@@ -18,33 +18,40 @@ public class CartController {
 
 	@GetMapping
 	public ResponseEntity<ApiResponse<CartResponse>> getCart(Authentication authentication) {
-		return ResponseEntity.ok(ApiResponse.success(cartService.getCart(authentication.getName())));
+		return ResponseEntity.ok(ApiResponse.success(cartService.getCart(getEmail(authentication))));
 	}
 
 	@PostMapping("/add")
 	public ResponseEntity<ApiResponse<CartResponse>> addItem(Authentication authentication,
 			@Valid @RequestBody AddCartItemRequest request) {
-		CartResponse response = cartService.addItem(authentication.getName(), request);
+		CartResponse response = cartService.addItem(getEmail(authentication), request);
 		return ResponseEntity.ok(ApiResponse.success(response, "Item added to cart"));
 	}
 
 	@PutMapping("/update")
 	public ResponseEntity<ApiResponse<CartResponse>> updateItem(Authentication authentication,
 			@Valid @RequestBody UpdateCartItemRequest request) {
-		CartResponse response = cartService.updateItemQuantity(authentication.getName(), request);
+		CartResponse response = cartService.updateItemQuantity(getEmail(authentication), request);
 		return ResponseEntity.ok(ApiResponse.success(response, "Cart updated"));
 	}
 
 	@DeleteMapping("/remove/{cartItemId}")
 	public ResponseEntity<ApiResponse<CartResponse>> removeItem(Authentication authentication,
 			@PathVariable Long cartItemId) {
-		CartResponse response = cartService.removeItem(authentication.getName(), cartItemId);
+		CartResponse response = cartService.removeItem(getEmail(authentication), cartItemId);
 		return ResponseEntity.ok(ApiResponse.success(response, "Item removed from cart"));
 	}
 
 	@DeleteMapping("/clear")
 	public ResponseEntity<ApiResponse<Void>> clearCart(Authentication authentication) {
-		cartService.clearCart(authentication.getName());
+		cartService.clearCart(getEmail(authentication));
 		return ResponseEntity.ok(ApiResponse.success(null, "Cart cleared"));
+	}
+
+	private String getEmail(Authentication authentication) {
+		if (authentication == null || authentication.getName() == null) {
+			throw new com.ecommerce.exception.BadRequestException("Authentication required to access cart");
+		}
+		return authentication.getName();
 	}
 }

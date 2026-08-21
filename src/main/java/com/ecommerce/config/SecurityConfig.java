@@ -135,33 +135,29 @@ public class SecurityConfig {
 
 	private static final String[] PUBLIC_ENDPOINTS = { "/auth/register", "/auth/login", "/auth/refresh",
 			"/auth/logout", "/swagger-ui/**", "/swagger-ui.html", "/api-docs/**", "/v3/api-docs/**",
-			"/", "/index.html", "/login", "/cart", "/checkout", "/products", "/categories", "/static/**", "/assets/**",
+			"/", "/index.html", "/login", "/static/**", "/assets/**",
 			"/*.js", "/*.css", "/*.ico", "/*.png", "/*.svg", "/*.json", "/error" };
 
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-		CookieCsrfTokenRepository csrfTokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
-		csrfTokenRepository.setCookieCustomizer(cookie -> cookie.sameSite("None").secure(true).partitioned(true));
-		http.csrf(csrf -> csrf.csrfTokenRepository(csrfTokenRepository)
-						.ignoringRequestMatchers("/auth/login", "/auth/register", "/auth/refresh", "/auth/logout"))
-				.cors(cors -> {
-				})
-				.authorizeHttpRequests(auth -> auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+		http.csrf(csrf -> csrf.disable())
+				.cors(cors -> cors.configurationSource(corsConfigurationSource()))
+				.authorizeHttpRequests(auth -> auth
+						.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 						.requestMatchers(PUBLIC_ENDPOINTS).permitAll()
-						.requestMatchers(HttpMethod.GET, "/products/*/reviews", "/products/*/reviews/average")
-						.permitAll().requestMatchers(HttpMethod.POST, "/products/*/reviews").authenticated()
-						.requestMatchers(HttpMethod.POST, "/products/images/**").hasRole("ADMIN")
-						.requestMatchers(HttpMethod.GET, "/inventory/**").permitAll()
+						.requestMatchers(HttpMethod.GET, "/products", "/products/**", "/categories", "/categories/**", "/inventory/**").permitAll()
+						.requestMatchers(HttpMethod.GET, "/products/*/reviews", "/products/*/reviews/average").permitAll()
+						.requestMatchers(HttpMethod.POST, "/products/*/reviews").authenticated()
+						.requestMatchers(HttpMethod.POST, "/products/images", "/products/images/**").hasRole("ADMIN")
+						.requestMatchers(HttpMethod.POST, "/products", "/products/**").hasRole("ADMIN")
+						.requestMatchers(HttpMethod.PUT, "/products", "/products/**").hasRole("ADMIN")
+						.requestMatchers(HttpMethod.DELETE, "/products", "/products/**").hasRole("ADMIN")
+						.requestMatchers(HttpMethod.POST, "/categories", "/categories/**").hasRole("ADMIN")
+						.requestMatchers(HttpMethod.PUT, "/categories", "/categories/**").hasRole("ADMIN")
+						.requestMatchers(HttpMethod.DELETE, "/categories", "/categories/**").hasRole("ADMIN")
 						.requestMatchers(HttpMethod.PUT, "/inventory/**").hasRole("ADMIN")
-						.requestMatchers(HttpMethod.GET, "/products/**").permitAll()
-						.requestMatchers(HttpMethod.POST, "/products/**").hasRole("ADMIN")
-						.requestMatchers(HttpMethod.PUT, "/products/**").hasRole("ADMIN")
-						.requestMatchers(HttpMethod.DELETE, "/products/**").hasRole("ADMIN")
-						.requestMatchers(HttpMethod.GET, "/categories/**").permitAll()
-						.requestMatchers(HttpMethod.POST, "/categories/**").hasRole("ADMIN")
-						.requestMatchers(HttpMethod.PUT, "/categories/**").hasRole("ADMIN")
-						.requestMatchers(HttpMethod.DELETE, "/categories/**").hasRole("ADMIN")
-						.requestMatchers("/admin/**").hasRole("ADMIN").anyRequest().authenticated())
+						.requestMatchers("/admin/**").hasRole("ADMIN")
+						.anyRequest().authenticated())
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authenticationProvider(authenticationProvider())
 				.exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint()))
