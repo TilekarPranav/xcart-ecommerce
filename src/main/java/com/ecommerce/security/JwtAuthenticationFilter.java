@@ -40,7 +40,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 				if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 					UserDetails userDetails = customUserDetailsService.loadUserByUsername(userEmail);
 
-					if (jwtService.isTokenValid(jwt, userDetails)) {
+					// isTokenValid() only checks subject + expiration. A refresh token is a
+					// perfectly valid JWT for the same user, so without this explicit type
+					// check a leaked/reused refresh token (7-day lifetime) would authenticate
+					// as if it were a 15-minute access token. /auth/refresh already enforces
+					// type=="refresh" on its side; this is the missing type=="access" side.
+					if (jwtService.isTokenValid(jwt, userDetails) && "access".equals(jwtService.extractTokenType(jwt))) {
 						UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(userDetails,
 								null, userDetails.getAuthorities());
 						token.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

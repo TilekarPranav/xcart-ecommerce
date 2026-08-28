@@ -1,104 +1,13 @@
-//package com.ecommerce.config;
-//
-//import org.springframework.context.annotation.Bean;
-//import org.springframework.http.HttpMethod;
-//import org.springframework.context.annotation.Configuration;
-//import org.springframework.security.authentication.AuthenticationManager;
-//import org.springframework.security.authentication.AuthenticationProvider;
-//import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-//import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-//import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-//import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-//import org.springframework.security.config.http.SessionCreationPolicy;
-//import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-//import org.springframework.security.crypto.password.PasswordEncoder;
-//import org.springframework.security.web.SecurityFilterChain;
-//import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-//import org.springframework.web.cors.CorsConfiguration;
-//import org.springframework.web.cors.CorsConfigurationSource;
-//import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-//
-//import java.util.List;
-//
-//import com.ecommerce.security.CustomUserDetailsService;
-//import com.ecommerce.security.JwtAuthenticationFilter;
-//
-//import lombok.RequiredArgsConstructor;
-//
-//@Configuration
-//@EnableWebSecurity
-//@RequiredArgsConstructor
-//public class SecurityConfig {
-//
-//	private final CustomUserDetailsService userDetailsService;
-//	private final JwtAuthenticationFilter authenticationFilter;
-//
-//	private static final String[] PUBLIC_ENDPOINTS = { "/auth/register", "/auth/login", "/swagger-ui/**",
-//			"/swagger-ui.html", "/api-docs/**", "/v3/api-docs/**" };
-//
-//	@Bean
-//	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-//		http.csrf(csrf -> csrf.disable()).cors(cors -> {
-//		}).authorizeHttpRequests(auth -> auth.requestMatchers(PUBLIC_ENDPOINTS).permitAll()
-//				.requestMatchers(HttpMethod.GET, "/products/*/reviews", "/products/*/reviews/average").permitAll()
-//				.requestMatchers(HttpMethod.POST, "/products/*/reviews").authenticated()
-//				.requestMatchers(HttpMethod.POST, "/products/images/**").hasRole("ADMIN")
-//				.requestMatchers(HttpMethod.GET, "/inventory/**").permitAll()
-//				.requestMatchers(HttpMethod.PUT, "/inventory/**").hasRole("ADMIN")
-//				.requestMatchers(HttpMethod.GET, "/products/**").permitAll()
-//				.requestMatchers(HttpMethod.POST, "/products/**").hasRole("ADMIN")
-//				.requestMatchers(HttpMethod.PUT, "/products/**").hasRole("ADMIN")
-//				.requestMatchers(HttpMethod.DELETE, "/products/**").hasRole("ADMIN")
-//				.requestMatchers(HttpMethod.GET, "/categories/**").permitAll()
-//				.requestMatchers(HttpMethod.POST, "/categories/**").hasRole("ADMIN")
-//				.requestMatchers(HttpMethod.PUT, "/categories/**").hasRole("ADMIN")
-//				.requestMatchers(HttpMethod.DELETE, "/categories/**").hasRole("ADMIN").requestMatchers("/admin/**")
-//				.hasRole("ADMIN").anyRequest().authenticated())
-//				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-//				.authenticationProvider(authenticationProvider())
-//				.addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class);
-//		return http.build();
-//	}
-//
-//	@Bean
-//	public CorsConfigurationSource corsConfigurationSource() {
-//		CorsConfiguration config = new CorsConfiguration();
-//		config.setAllowedOrigins(List.of("https://x-cart.onrender.com", "http://localhost:5173"));
-//		config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-//		config.setAllowedHeaders(List.of("*"));
-//		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-//		source.registerCorsConfiguration("/**", config);
-//		return source;
-//	}
-//
-//	@Bean
-//	public AuthenticationProvider authenticationProvider() {
-//		DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
-//		provider.setPasswordEncoder(passwordEncoder());
-//		return provider;
-//	}
-//
-//	@Bean
-//	public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
-//			throws Exception {
-//		return authenticationConfiguration.getAuthenticationManager();
-//	}
-//
-//	@Bean
-//	public PasswordEncoder passwordEncoder() {
-//		return new BCryptPasswordEncoder();
-//	}
-//}
-
 package com.ecommerce.config;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -108,19 +17,23 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfFilter;
+import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.List;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.ecommerce.security.CustomUserDetailsService;
 import com.ecommerce.security.JwtAuthenticationFilter;
+import com.ecommerce.security.PartitionedCookieCsrfTokenRepository;
 
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -138,9 +51,30 @@ public class SecurityConfig {
 			"/", "/index.html", "/login", "/static/**", "/assets/**",
 			"/*.js", "/*.css", "/*.ico", "/*.png", "/*.svg", "/*.json", "/error" };
 
+	// Deliberately NOT the same list as PUBLIC_ENDPOINTS above: that list controls
+	// *authentication*, this one controls *CSRF*, and they're different axes. Only
+	// login/register are exempt here — there's no established session yet to protect,
+	// and forced-login CSRF is a materially lower-severity issue than forcing a
+	// state-changing action on an already-authenticated session. /auth/refresh and
+	// /auth/logout are intentionally NOT exempt: both act on cookies, and by the time
+	// either is called the frontend has already picked up an XSRF-TOKEN cookie from its
+	// own GET /auth/me call on app load (GET requests aren't CSRF-checked, but the
+	// CsrfCookieFilter below still issues the cookie on them).
+	private static final String[] CSRF_IGNORED_ENDPOINTS = { "/auth/login", "/auth/register" };
+
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-		http.csrf(csrf -> csrf.disable())
+		// The frontend reads the XSRF-TOKEN cookie's raw value directly (axios
+		// withXSRFToken) and echoes it back verbatim as the X-XSRF-TOKEN header, so the
+		// request handler must compare the raw value rather than the default
+		// BREACH-protection XOR-masked one (that default is meant for tokens rendered
+		// into server-side HTML forms, not read straight from a cookie by JS).
+		CsrfTokenRequestAttributeHandler requestHandler = new CsrfTokenRequestAttributeHandler();
+		requestHandler.setCsrfRequestAttributeName(null);
+
+		http.csrf(csrf -> csrf.csrfTokenRepository(new PartitionedCookieCsrfTokenRepository())
+						.csrfTokenRequestHandler(requestHandler).ignoringRequestMatchers(CSRF_IGNORED_ENDPOINTS))
+				.addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class)
 				.cors(cors -> cors.configurationSource(corsConfigurationSource()))
 				.authorizeHttpRequests(auth -> auth
 						.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
@@ -174,10 +108,6 @@ public class SecurityConfig {
 				response.setStatus(HttpStatus.UNAUTHORIZED.value());
 				response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 				response.setCharacterEncoding("UTF-8");
-				// Hand-written rather than serialized via ApiResponse/an ObjectMapper bean:
-				// this response's shape is fixed, and different Spring Boot versions here
-				// have swapped which Jackson major version's ObjectMapper/JsonMapper bean
-				// actually exists — depending on either was the whole problem.
 				String body = "{\"success\":false,\"message\":\"Authentication required. Please provide a valid "
 						+ "JWT token.\",\"timestamp\":\"" + java.time.Instant.now() + "\"}";
 				response.getWriter().write(body);
@@ -213,5 +143,26 @@ public class SecurityConfig {
 	@Bean
 	public PasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder();
+	}
+
+	/**
+	 * Spring Security only writes the CSRF cookie lazily, when something actually reads
+	 * the resolved CsrfToken value (normally a server-rendered HTML form tag). A pure
+	 * JSON/SPA backend never does that, so without this filter the cookie would never
+	 * appear at all. Forcing csrfToken.getToken() on every request is the standard
+	 * Spring Security pattern for SPA CSRF integration — it's what makes the frontend's
+	 * first GET /auth/me call (on every app load) actually deposit the XSRF-TOKEN
+	 * cookie before the user does anything state-changing.
+	 */
+	private static final class CsrfCookieFilter extends OncePerRequestFilter {
+		@Override
+		protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+				FilterChain filterChain) throws ServletException, IOException {
+			CsrfToken csrfToken = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
+			if (csrfToken != null) {
+				csrfToken.getToken();
+			}
+			filterChain.doFilter(request, response);
+		}
 	}
 }

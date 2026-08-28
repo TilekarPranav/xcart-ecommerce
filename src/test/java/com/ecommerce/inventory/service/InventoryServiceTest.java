@@ -99,4 +99,62 @@ class InventoryServiceTest {
 		assertThatThrownBy(() -> inventoryService.updateStock(request)).isInstanceOf(BadRequestException.class)
 				.hasMessageContaining("SET, ADD, or REDUCE");
 	}
+
+	@Test
+	void decreaseStockForOrder_success_updatesQuantity() {
+		when(inventoryRepository.findByProductId(1L)).thenReturn(Optional.of(inventory));
+		when(inventoryRepository.save(any(Inventory.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+		inventoryService.decreaseStockForOrder(1L, 4);
+
+		assertThat(inventory.getQuantity()).isEqualTo(6);
+		verify(inventoryRepository, times(1)).save(inventory);
+	}
+
+	@Test
+	void decreaseStockForOrder_insufficientStock_throwsBadRequestException() {
+		when(inventoryRepository.findByProductId(1L)).thenReturn(Optional.of(inventory));
+
+		assertThatThrownBy(() -> inventoryService.decreaseStockForOrder(1L, 15))
+				.isInstanceOf(BadRequestException.class)
+				.hasMessageContaining("Insufficient stock");
+
+		verify(inventoryRepository, never()).save(any(Inventory.class));
+	}
+
+	@Test
+	void decreaseStockForOrder_optimisticLockRetrySucceeds() {
+		when(inventoryRepository.findByProductId(1L)).thenReturn(Optional.of(inventory));
+		when(inventoryRepository.save(any(Inventory.class)))
+				.thenThrow(new org.springframework.dao.OptimisticLockingFailureException("conflict"))
+				.thenReturn(inventory);
+
+		inventoryService.decreaseStockForOrder(1L, 2);
+
+		verify(inventoryRepository, times(2)).save(any(Inventory.class));
+	}
+
+	@Test
+	void decreaseStockForOrder_optimisticLockRetryExhaustion_throwsConflictException() {
+		when(inventoryRepository.findByProductId(1L)).thenReturn(Optional.of(inventory));
+		when(inventoryRepository.save(any(Inventory.class)))
+				.thenThrow(new org.springframework.dao.OptimisticLockingFailureException("conflict"));
+
+		assertThatThrownBy(() -> inventoryService.decreaseStockForOrder(1L, 2))
+				.isInstanceOf(com.ecommerce.exception.ConflictException.class)
+				.hasMessageContaining("being purchased by someone else");
+
+		verify(inventoryRepository, times(3)).save(any(Inventory.class));
+	}
+
+	@Test
+	void restockForCancelledOrder_success_increasesQuantity() {
+		when(inventoryRepository.findByProductId(1L)).thenReturn(Optional.of(inventory));
+		when(inventoryRepository.save(any(Inventory.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+		inventoryService.restockForCancelledOrder(1L, 5);
+
+		assertThat(inventory.getQuantity()).isEqualTo(15);
+		verify(inventoryRepository, times(1)).save(inventory);
+	}
 }

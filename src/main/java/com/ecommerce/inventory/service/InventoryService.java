@@ -38,6 +38,12 @@ public class InventoryService {
 					throw new BadRequestException(
 							"Could not update stock due to a conflicting update - please try again");
 				}
+				try {
+					Thread.sleep(50L * attempt);
+				} catch (InterruptedException ie) {
+					Thread.currentThread().interrupt();
+					throw new BadRequestException("Inventory update interrupted");
+				}
 			}
 		}
 	}
@@ -74,6 +80,12 @@ public class InventoryService {
 				if (attempt >= maxAttempts) {
 					throw new ConflictException(
 							"This item just sold out or is being purchased by someone else — please try again");
+				}
+				try {
+					Thread.sleep(50L * attempt);
+				} catch (InterruptedException ie) {
+					Thread.currentThread().interrupt();
+					throw new ConflictException("Inventory update interrupted");
 				}
 			}
 		}
