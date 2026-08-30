@@ -72,6 +72,16 @@ public class ProductService {
 		return toResponse(product);
 	}
 
+	/**
+	 * Same lookup as getById(), but for the admin product-management screen: a
+	 * deactivated (soft-deleted) product must still be retrievable so it can be
+	 * viewed/edited/reactivated. Deliberately does NOT touch getById() above — that
+	 * method must keep 404-ing on inactive products for the public storefront.
+	 */
+	public ProductResponse getByIdForAdmin(Long id) {
+		return toResponse(findByIdOrThrow(id));
+	}
+
 	public Page<ProductResponse> search(String name, Long categoryId, BigDecimal minPrice, BigDecimal maxPrice,
 			Pageable pageable) {
 

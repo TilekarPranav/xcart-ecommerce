@@ -43,7 +43,7 @@ public class AuthService {
 		}
 
 		Role customRole = roleRepository.findByName(Role.ROLE_CUSTOMER)
-				.orElseThrow(() -> new IllegalStateException("ROLE_CUSTOMER not found - did DataInitializer run?"));
+				.orElseGet(() -> roleRepository.save(Role.builder().name(Role.ROLE_CUSTOMER).build()));
 
 		Set<Role> roles = new HashSet<Role>();
 		roles.add(customRole);

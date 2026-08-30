@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -18,11 +19,10 @@ public class GlobalExceptionHandler {
 
 	private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-	@ExceptionHandler(Exception.class)
-	public ResponseEntity<ApiResponse<Void>> handleGeneric(Exception ex) {
-		log.error("Unhandled exception", ex);
-		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-				.body(ApiResponse.error("Something went wrong. Please try again later."));
+	@ExceptionHandler(AuthenticationException.class)
+	public ResponseEntity<ApiResponse<Void>> handleAuthentication(AuthenticationException ex) {
+		return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+				.body(ApiResponse.error("Invalid email or password"));
 	}
 
 	@ExceptionHandler(ResourceNotFoundException.class)
@@ -56,12 +56,6 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(ex.getMessage()));
 	}
 
-//	@ExceptionHandler(Exception.class)
-//	public ResponseEntity<ApiResponse<Void>> handleGeneric(Exception ex) {
-//		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-//				.body(ApiResponse.error("Something went wrong. Please try again later."));
-//	}
-
 	@ExceptionHandler(org.springframework.web.bind.MissingServletRequestParameterException.class)
 	public ResponseEntity<ApiResponse<Void>> handleMissingParam(
 			org.springframework.web.bind.MissingServletRequestParameterException ex) {
@@ -82,6 +76,13 @@ public class GlobalExceptionHandler {
 		log.error("Data integrity violation", ex);
 		return ResponseEntity.status(HttpStatus.CONFLICT)
 				.body(ApiResponse.error("Cannot delete or modify this resource — it has related records."));
+	}
+
+	@ExceptionHandler(Exception.class)
+	public ResponseEntity<ApiResponse<Void>> handleGeneric(Exception ex) {
+		log.error("Unhandled exception", ex);
+		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.body(ApiResponse.error("Something went wrong. Please try again later."));
 	}
 
 }

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.web.csrf.CsrfToken;
 
 import com.ecommerce.auth.dto.AuthResponse;
 import com.ecommerce.auth.dto.LoginRequest;
@@ -61,10 +62,10 @@ public class AuthController {
 		UserSummaryResponse response = authService.me(authentication.getName());
 		return ResponseEntity.ok(ApiResponse.success(response));
 	}
-	
+
 	@PostMapping("/refresh")
-	public ResponseEntity<ApiResponse<Void>> refresh(@CookieValue(name = "refreshToken", required = false) String refreshToken,
-			HttpServletResponse response) {
+	public ResponseEntity<ApiResponse<Void>> refresh(
+			@CookieValue(name = "refreshToken", required = false) String refreshToken, HttpServletResponse response) {
 		if (refreshToken == null) {
 			throw new com.ecommerce.exception.BadRequestException("No refresh token provided");
 		}
@@ -85,5 +86,10 @@ public class AuthController {
 		response.addHeader(HttpHeaders.SET_COOKIE, access.toString());
 		response.addHeader(HttpHeaders.SET_COOKIE, refresh.toString());
 		return ResponseEntity.ok(ApiResponse.success(null, "Logged out"));
+	}
+
+	@GetMapping("/csrf")
+	public ResponseEntity<ApiResponse<String>> csrf(CsrfToken csrfToken) {
+		return ResponseEntity.ok(ApiResponse.success(csrfToken.getToken(), "CSRF token initialized"));
 	}
 }
