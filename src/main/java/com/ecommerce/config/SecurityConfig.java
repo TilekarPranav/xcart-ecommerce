@@ -64,6 +64,17 @@ public class SecurityConfig {
 	// CsrfCookieFilter below still issues the cookie on them).
 	private static final String[] CSRF_IGNORED_ENDPOINTS = { "/auth/login", "/auth/register", "/auth/csrf" };
 
+	// Deliberately NOT the same list as PUBLIC_ENDPOINTS above: that list controls
+	// *authentication*, this one controls *CSRF*, and they're different axes. Only
+	// login/register are exempt here — there's no established session yet to protect,
+	// and forced-login CSRF is a materially lower-severity issue than forcing a
+	// state-changing action on an already-authenticated session. /auth/refresh and
+	// /auth/logout are intentionally NOT exempt: both act on cookies, and by the time
+	// either is called the frontend has already picked up an XSRF-TOKEN cookie from its
+	// own GET /auth/me call on app load (GET requests aren't CSRF-checked, but the
+	// CsrfCookieFilter below still issues the cookie on them).
+	private static final String[] CSRF_IGNORED_ENDPOINTS = { "/auth/login", "/auth/register" };
+
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		// The frontend reads the XSRF-TOKEN cookie's raw value directly (axios
@@ -75,7 +86,11 @@ public class SecurityConfig {
 		requestHandler.setCsrfRequestAttributeName(null);
 
 		http.csrf(csrf -> csrf.csrfTokenRepository(new PartitionedCookieCsrfTokenRepository())
+<<<<<<< HEAD
 				.csrfTokenRequestHandler(requestHandler).ignoringRequestMatchers(CSRF_IGNORED_ENDPOINTS))
+=======
+						.csrfTokenRequestHandler(requestHandler).ignoringRequestMatchers(CSRF_IGNORED_ENDPOINTS))
+>>>>>>> 7a59d717989bba0c7ca693d36abca14f4438bcce
 				.addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class)
 				.cors(cors -> cors.configurationSource(corsConfigurationSource()))
 				.authorizeHttpRequests(auth -> auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
@@ -149,6 +164,7 @@ public class SecurityConfig {
 	}
 
 	/**
+<<<<<<< HEAD
 	 * Spring Security only writes the CSRF cookie lazily, when something actually
 	 * reads the resolved CsrfToken value (normally a server-rendered HTML form
 	 * tag). A pure JSON/SPA backend never does that, so without this filter the
@@ -157,6 +173,15 @@ public class SecurityConfig {
 	 * it's what makes the frontend's first GET /auth/me call (on every app load)
 	 * actually deposit the XSRF-TOKEN cookie before the user does anything
 	 * state-changing.
+=======
+	 * Spring Security only writes the CSRF cookie lazily, when something actually reads
+	 * the resolved CsrfToken value (normally a server-rendered HTML form tag). A pure
+	 * JSON/SPA backend never does that, so without this filter the cookie would never
+	 * appear at all. Forcing csrfToken.getToken() on every request is the standard
+	 * Spring Security pattern for SPA CSRF integration — it's what makes the frontend's
+	 * first GET /auth/me call (on every app load) actually deposit the XSRF-TOKEN
+	 * cookie before the user does anything state-changing.
+>>>>>>> 7a59d717989bba0c7ca693d36abca14f4438bcce
 	 */
 	private static final class CsrfCookieFilter extends OncePerRequestFilter {
 		@Override
