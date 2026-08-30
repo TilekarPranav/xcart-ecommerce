@@ -1,10 +1,6 @@
 package com.ecommerce.support;
 
 import static org.junit.jupiter.api.Assertions.fail;
-<<<<<<< HEAD
-=======
-import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
->>>>>>> 7a59d717989bba0c7ca693d36abca14f4438bcce
 
 import java.util.Set;
 import java.util.UUID;
@@ -13,10 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.core.KafkaTemplate;
-<<<<<<< HEAD
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers;
-=======
->>>>>>> 7a59d717989bba0c7ca693d36abca14f4438bcce
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -48,16 +41,6 @@ public abstract class AbstractIntegrationTest {
 
 	protected MockMvc mockMvc;
 
-<<<<<<< HEAD
-=======
-	@BeforeEach
-	void setUpMockMvc() {
-		mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext)
-				.apply(springSecurity())
-				.build();
-	}
-
->>>>>>> 7a59d717989bba0c7ca693d36abca14f4438bcce
 	@Autowired
 	protected UserRepository userRepository;
 
@@ -67,7 +50,6 @@ public abstract class AbstractIntegrationTest {
 	@MockitoBean
 	protected KafkaTemplate<String, Object> kafkaTemplate;
 
-<<<<<<< HEAD
 	@BeforeEach
 	void initMockMvc() {
 		this.mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext)
@@ -83,8 +65,6 @@ public abstract class AbstractIntegrationTest {
 				.orElseGet(() -> roleRepository.save(Role.builder().name(Role.ROLE_ADMIN).build()));
 	}
 
-=======
->>>>>>> 7a59d717989bba0c7ca693d36abca14f4438bcce
 	/** A registered user plus the cookies the backend actually issued at registration. */
 	public record AuthedUser(String email, String password, Cookie accessToken, Cookie refreshToken) {
 	}
@@ -112,12 +92,7 @@ public abstract class AbstractIntegrationTest {
 		User entity = userRepository.findByEmail(user.email())
 				.orElseThrow(() -> new IllegalStateException("registered user not found: " + user.email()));
 		Role admin = roleRepository.findByName(Role.ROLE_ADMIN)
-<<<<<<< HEAD
 				.orElseGet(() -> roleRepository.save(new Role(null, Role.ROLE_ADMIN)));
-=======
-				.orElseThrow(() -> new IllegalStateException(
-						"ROLE_ADMIN not seeded — DataInitializer should have created it on startup"));
->>>>>>> 7a59d717989bba0c7ca693d36abca14f4438bcce
 		entity.setRoles(Set.of(admin));
 		userRepository.save(entity);
 

@@ -24,14 +24,9 @@ import com.ecommerce.support.AbstractIntegrationTest;
 import jakarta.servlet.http.Cookie;
 
 /**
-<<<<<<< HEAD
  * Covers CSRF protection verification:
  * GET works without CSRF token; POST/PUT/DELETE without a CSRF token are rejected with 403;
  * POST with valid double-submitted cookie and header is accepted.
-=======
- * Covers CSRF enforcement across GET (exempt), POST/PUT/DELETE without token (rejected),
- * and with valid double-submit token (accepted), plus login/register exemption.
->>>>>>> 7a59d717989bba0c7ca693d36abca14f4438bcce
  */
 class CsrfProtectionTest extends AbstractIntegrationTest {
 
@@ -91,13 +86,10 @@ class CsrfProtectionTest extends AbstractIntegrationTest {
 				{"productId":%d,"quantity":1}
 				""".formatted(productId);
 
-<<<<<<< HEAD
 		// Having the cookie in the browser isn't enough on its own — a cross-site
 		// attacker's forged request would carry it automatically too. The header (which
 		// the attacker cannot read cross-origin) is what actually proves the request
 		// came from the app's own JS.
-=======
->>>>>>> 7a59d717989bba0c7ca693d36abca14f4438bcce
 		mockMvc.perform(post("/cart/add").cookie(user.accessToken()).cookie(csrf).contentType(APPLICATION_JSON)
 						.content(body))
 				.andExpect(status().isForbidden());

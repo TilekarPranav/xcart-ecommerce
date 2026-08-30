@@ -56,15 +56,6 @@ public class GlobalExceptionHandler {
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(ex.getMessage()));
 	}
 
-<<<<<<< HEAD
-=======
-	@ExceptionHandler(org.springframework.security.core.AuthenticationException.class)
-	public ResponseEntity<ApiResponse<Void>> handleAuthentication(org.springframework.security.core.AuthenticationException ex) {
-		return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-				.body(ApiResponse.error("Invalid email or password"));
-	}
-
->>>>>>> 7a59d717989bba0c7ca693d36abca14f4438bcce
 	@ExceptionHandler(org.springframework.web.bind.MissingServletRequestParameterException.class)
 	public ResponseEntity<ApiResponse<Void>> handleMissingParam(
 			org.springframework.web.bind.MissingServletRequestParameterException ex) {

@@ -17,13 +17,9 @@ import com.ecommerce.support.AbstractIntegrationTest;
 import jakarta.servlet.http.Cookie;
 
 /**
-<<<<<<< HEAD
  * Controller-level tests for AuthController.
  * Covers login, register, token-type separation, CSRF requirements for stateful endpoints,
  * and 401 handling for bad/unknown credentials.
-=======
- * Controller-level integration tests covering AuthController and JwtAuthenticationFilter token-type enforcement.
->>>>>>> 7a59d717989bba0c7ca693d36abca14f4438bcce
  */
 class AuthControllerTest extends AbstractIntegrationTest {
 
@@ -105,13 +101,10 @@ class AuthControllerTest extends AbstractIntegrationTest {
 				.andExpect(jsonPath("$.data.email").value(user.email()));
 	}
 
-<<<<<<< HEAD
 	/**
 	 * Regression test: JwtAuthenticationFilter enforces type=="access", so a
 	 * refresh token (7-day lifetime) presented as the access token is rejected.
 	 */
-=======
->>>>>>> 7a59d717989bba0c7ca693d36abca14f4438bcce
 	@Test
 	void protectedEndpoint_withRefreshTokenInPlaceOfAccessToken_returns401() throws Exception {
 		AuthedUser user = registerUser();

@@ -28,10 +28,6 @@ import com.ecommerce.payment.entity.PaymentStatus;
 import com.ecommerce.payment.repository.PaymentRepository;
 import com.ecommerce.product.entity.Product;
 import com.ecommerce.product.repository.ProductRepository;
-<<<<<<< HEAD
-=======
-import com.ecommerce.review.entity.Review;
->>>>>>> 7a59d717989bba0c7ca693d36abca14f4438bcce
 import com.ecommerce.review.repository.ReviewRepository;
 import com.ecommerce.support.AbstractIntegrationTest;
 import com.ecommerce.user.entity.User;
@@ -40,12 +36,8 @@ import com.ecommerce.user.repository.UserRepository;
 import jakarta.servlet.http.Cookie;
 
 /**
-<<<<<<< HEAD
  * Controller-level authorization tests for Order, Payment, Review, Notification,
  * and Admin Product endpoints.
-=======
- * Controller-level authorization tests for Order, Payment, Review, Notification, and AdminProduct endpoints.
->>>>>>> 7a59d717989bba0c7ca693d36abca14f4438bcce
  */
 class OwnershipAuthorizationTest extends AbstractIntegrationTest {
 
@@ -80,10 +72,6 @@ class OwnershipAuthorizationTest extends AbstractIntegrationTest {
 		String addBody = """
 				{"productId":%d,"quantity":1}
 				""".formatted(product.getId());
-<<<<<<< HEAD
-=======
-
->>>>>>> 7a59d717989bba0c7ca693d36abca14f4438bcce
 		mockMvc.perform(post("/cart/add").cookie(user.accessToken()).cookie(csrf)
 						.header("X-XSRF-TOKEN", csrf.getValue()).contentType(APPLICATION_JSON).content(addBody))
 				.andExpect(status().isOk());
