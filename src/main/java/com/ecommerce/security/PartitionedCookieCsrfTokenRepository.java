@@ -49,7 +49,7 @@ public class PartitionedCookieCsrfTokenRepository implements CsrfTokenRepository
 		ResponseCookie.ResponseCookieBuilder cookie = ResponseCookie
 				.from(DEFAULT_COOKIE_NAME, token != null ? token.getToken() : "").httpOnly(false).secure(true).sameSite("Lax").path("/");
 		if (token == null) {
-			cookie.maxAge(0);
+			cookie.maxAge(token != null ? 60 * 60 : 0);
 		}
 		response.addHeader(HttpHeaders.SET_COOKIE, cookie.build().toString());
 	}
