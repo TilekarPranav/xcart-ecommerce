@@ -47,8 +47,7 @@ public class PartitionedCookieCsrfTokenRepository implements CsrfTokenRepository
 	@Override
 	public void saveToken(CsrfToken token, HttpServletRequest request, HttpServletResponse response) {
 		ResponseCookie.ResponseCookieBuilder cookie = ResponseCookie
-				.from(DEFAULT_COOKIE_NAME, token != null ? token.getToken() : "").httpOnly(false).secure(true)
-				.sameSite("None").partitioned(true).path("/");
+				.from(DEFAULT_COOKIE_NAME, token != null ? token.getToken() : "").httpOnly(false).secure(true).sameSite("Lax").path("/");
 		if (token == null) {
 			cookie.maxAge(0);
 		}
