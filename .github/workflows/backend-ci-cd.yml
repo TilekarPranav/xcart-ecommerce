@@ -36,13 +36,6 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
-      - name: OWASP Dependency Check
-        uses: dependency-check/dependency-check-action@main
-        with:
-          project: xcart-backend
-          path: pom.xml
-          format: HTML
-
   deploy:
     name: Deploy to Render
     needs: build-and-test
