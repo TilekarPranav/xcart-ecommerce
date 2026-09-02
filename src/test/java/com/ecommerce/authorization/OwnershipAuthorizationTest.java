@@ -59,12 +59,27 @@ class OwnershipAuthorizationTest extends AbstractIntegrationTest {
 	private Product product;
 
 	@BeforeEach
-	void seedProduct() {
-		Category category = categoryRepository.save(Category.builder().name("Cat-" + System.nanoTime()).build());
-		product = productRepository.save(Product.builder().name("Owned Product").description("desc")
-				.price(new BigDecimal("29.99")).active(true).category(category).build());
-		inventoryRepository.save(Inventory.builder().product(product).quantity(50).build());
-	}
+void seedProduct() {
+    Category category = categoryRepository.save(
+            Category.builder()
+                    .name("Cat-" + System.nanoTime())
+                    .build());
+
+    product = productRepository.save(
+            Product.builder()
+                    .name("Owned Product-" + System.nanoTime())
+                    .description("desc")
+                    .price(new BigDecimal("29.99"))
+                    .active(true)
+                    .category(category)
+                    .build());
+
+    inventoryRepository.save(
+            Inventory.builder()
+                    .product(product)
+                    .quantity(50)
+                    .build());
+}
 
 	/** Places a real order for the given user via the actual HTTP flow (cart -> checkout). */
 	private Long placeOrderFor(AuthedUser user) throws Exception {
