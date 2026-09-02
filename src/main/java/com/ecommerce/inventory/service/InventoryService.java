@@ -20,6 +20,9 @@ public class InventoryService {
 
 	private final InventoryRepository inventoryRepository;
 
+	private static final int MAX_ATTEMPTS = 3;
+	private static final long RETRY_DELAY_MS = 25L;
+
 	public InventoryResponse getByProductId(Long id) {
 		Inventory inventory = findByProductIdOrThrow(id);
 		return toResponse(inventory);
@@ -27,17 +30,17 @@ public class InventoryService {
 
 	@Transactional
 	public InventoryResponse updateStock(InventoryUpdateRequest request) {
-		int maxAttempts = 3;
 		int attempt = 0;
 		while (true) {
 			try {
 				return doUpdateStock(request);
 			} catch (OptimisticLockingFailureException ex) {
 				attempt++;
-				if (attempt >= maxAttempts) {
+				if (attempt >= MAX_ATTEMPTS) {
 					throw new BadRequestException(
 							"Could not update stock due to a conflicting update - please try again");
 				}
+				backoff(attempt);
 			}
 		}
 	}
@@ -57,13 +60,16 @@ public class InventoryService {
 		}
 
 		inventory.setQuantity(newQuantity);
-		Inventory saved = inventoryRepository.save(inventory);
+		// saveAndFlush, not save: save() alone defers the actual UPDATE (and its
+		// version check) to transaction commit, which happens outside this
+		// try/catch entirely. Flushing here forces the optimistic-lock check to
+		// happen synchronously, where the retry loop can actually see it.
+		Inventory saved = inventoryRepository.saveAndFlush(inventory);
 		return toResponse(saved);
 	}
 
 	@Transactional
 	public void decreaseStockForOrder(Long productId, int amount) {
-		int maxAttempts = 3;
 		int attempt = 0;
 		while (true) {
 			try {
@@ -71,10 +77,11 @@ public class InventoryService {
 				return;
 			} catch (OptimisticLockingFailureException ex) {
 				attempt++;
-				if (attempt >= maxAttempts) {
+				if (attempt >= MAX_ATTEMPTS) {
 					throw new ConflictException(
 							"This item just sold out or is being purchased by someone else — please try again");
 				}
+				backoff(attempt);
 			}
 		}
 	}
@@ -88,7 +95,7 @@ public class InventoryService {
 		}
 
 		inventory.setQuantity(newQuantity);
-		inventoryRepository.save(inventory);
+		inventoryRepository.saveAndFlush(inventory);
 	}
 
 	@Transactional
@@ -96,6 +103,17 @@ public class InventoryService {
 		Inventory inventory = findByProductIdOrThrow(productId);
 		inventory.setQuantity(inventory.getQuantity() + amount);
 		inventoryRepository.save(inventory);
+	}
+
+	/** Small fixed delay, not full exponential backoff — this only needs to
+	 *  avoid an instant tight-loop retry against the same contended row, not
+	 *  survive sustained high contention. */
+	private void backoff(int attempt) {
+		try {
+			Thread.sleep(RETRY_DELAY_MS * attempt);
+		} catch (InterruptedException ie) {
+			Thread.currentThread().interrupt();
+		}
 	}
 
 	private Inventory findByProductIdOrThrow(Long productId) {

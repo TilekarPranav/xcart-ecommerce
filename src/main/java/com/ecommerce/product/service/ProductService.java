@@ -109,4 +109,31 @@ public class ProductService {
 				.active(product.isActive()).categoryId(product.getCategory().getId())
 				.categoryName(product.getCategory().getName()).createdAt(product.getCreatedAt()).build();
 	}
+
+		/**
+	 * Same filtering as search(), but for the admin product-management screen:
+	 * includes deactivated products. See ProductSpecifications.buildForAdmin().
+	 */
+	public Page<ProductResponse> searchForAdmin(String name, Long categoryId, BigDecimal minPrice, BigDecimal maxPrice,
+			Pageable pageable) {
+
+		if (minPrice != null && maxPrice != null && minPrice.compareTo(maxPrice) > 0) {
+			throw new BadRequestException("minPrice cannot be greater than maxPrice");
+		}
+
+		var spec = ProductSpecifications.buildForAdmin(name, categoryId, minPrice, maxPrice);
+		return productRepository.findAll(spec, pageable).map(this::toResponse);
+	}
+
+	/**
+	 * Reverses delete()'s soft-delete. Without this, delete() is a one-way
+	 * door — nothing anywhere in the codebase could turn active back to true.
+	 */
+	@Transactional
+	public ProductResponse reactivate(Long id) {
+		Product product = findByIdOrThrow(id);
+		product.setActive(true);
+		Product saved = productRepository.save(product);
+		return toResponse(saved);
+	}
 }

@@ -301,4 +301,46 @@ class OwnershipAuthorizationTest extends AbstractIntegrationTest {
 		mockMvc.perform(get("/admin/products/" + product.getId()).cookie(regularUser.accessToken()))
 				.andExpect(status().isForbidden());
 	}
+
+		@Test
+	void adminProductList_includesInactiveProducts_thatPublicSearchHides() throws Exception {
+		AuthedUser admin = registerAdminUser();
+		Cookie csrf = fetchCsrfCookie();
+
+		mockMvc.perform(delete("/products/" + product.getId()).cookie(admin.accessToken()).cookie(csrf)
+						.header("X-XSRF-TOKEN", csrf.getValue()))
+				.andExpect(status().isOk());
+
+		// Public search must not include it
+		// mockMvc.perform(get("/products/search").param("name", product.getName()))
+		// 		.andExpect(status().isOk())
+		// 		.andExpect(jsonPath("$.data.totalElements").value(0));
+
+		mockMvc.perform(get("/products/search").param("name", product.getName()))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.data.page.totalElements").value(0));
+
+		// Admin list must still include it
+		mockMvc.perform(get("/admin/products").param("name", product.getName()).cookie(admin.accessToken()))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.content[0].active").value(false));
+	}
+
+	@Test
+	void adminProductReactivate_setsActiveBackToTrue() throws Exception {
+		AuthedUser admin = registerAdminUser();
+		Cookie csrf = fetchCsrfCookie();
+
+		mockMvc.perform(delete("/products/" + product.getId()).cookie(admin.accessToken()).cookie(csrf)
+						.header("X-XSRF-TOKEN", csrf.getValue()))
+				.andExpect(status().isOk());
+
+		mockMvc.perform(put("/admin/products/" + product.getId() + "/reactivate").cookie(admin.accessToken())
+						.cookie(csrf).header("X-XSRF-TOKEN", csrf.getValue()))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.data.active").value(true));
+
+		// Public endpoint must be reachable again
+		mockMvc.perform(get("/products/" + product.getId())).andExpect(status().isOk());
+	}
 }

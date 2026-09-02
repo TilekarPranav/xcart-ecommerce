@@ -65,17 +65,24 @@ class InventoryServiceTest {
 	}
 
 	@Test
-	void updateStock_reduceOperation_decreasesQuantityCorrectly() {
-		InventoryUpdateRequest request = new InventoryUpdateRequest(1L, 3, "REDUCE");
+void updateStock_reduceOperation_decreasesQuantityCorrectly() {
+    InventoryUpdateRequest request =
+            new InventoryUpdateRequest(1L, 3, "REDUCE");
 
-		when(inventoryRepository.findByProductId(1L)).thenReturn(Optional.of(inventory));
-		when(inventoryRepository.save(any(Inventory.class))).thenAnswer(invocation -> invocation.getArgument(0));
+    when(inventoryRepository.findByProductId(1L))
+            .thenReturn(Optional.of(inventory));
 
-		InventoryResponse response = inventoryService.updateStock(request);
+    when(inventoryRepository.saveAndFlush(any(Inventory.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
 
-		assertThat(response.getQuantity()).isEqualTo(7); // 10 - 3
-		verify(inventoryRepository, times(1)).save(any(Inventory.class));
-	}
+    InventoryResponse response =
+            inventoryService.updateStock(request);
+
+    assertThat(response.getQuantity()).isEqualTo(7);
+
+    verify(inventoryRepository, times(1))
+            .saveAndFlush(any(Inventory.class));
+}
 
 	@Test
 	void updateStock_reduceBelowZero_throwsBadRequestException() {

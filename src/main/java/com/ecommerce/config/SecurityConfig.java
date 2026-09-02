@@ -46,9 +46,9 @@ public class SecurityConfig {
 	private final CustomUserDetailsService userDetailsService;
 	private final JwtAuthenticationFilter authenticationFilter;
 
-	private static final String[] PUBLIC_ENDPOINTS = { "/auth/register", "/auth/login", "/auth/refresh", "/auth/logout",
-			"/swagger-ui/**", "/swagger-ui.html", "/api-docs/**", "/v3/api-docs/**", "/", "/index.html", "/login",
-			"/static/**", "/assets/**", "/*.js", "/*.css", "/*.ico", "/*.png", "/*.svg", "/*.json", "/error" };
+	private static final String[] PUBLIC_ENDPOINTS = { "/auth/register", "/auth/login", "/auth/refresh", "/auth/logout","/auth/csrf",
+			"/swagger-ui/**", "/swagger-ui.html", "/api-docs/**", "/v3/api-docs/**", "/login",
+			 "/assets/**", "/*.js", "/*.css", "/*.ico", "/*.png", "/*.svg", "/*.json", "/error" };
 
 	// Deliberately NOT the same list as PUBLIC_ENDPOINTS above: that list controls
 	// *authentication*, this one controls *CSRF*, and they're different axes. Only
@@ -97,8 +97,7 @@ public class SecurityConfig {
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authenticationProvider(authenticationProvider())
 				.exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint()))
-				.addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class)
-				.addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class);
+				.addFilterBefore(authenticationFilter, UsernamePasswordAuthenticationFilter.class);
 		return http.build();
 	}
 

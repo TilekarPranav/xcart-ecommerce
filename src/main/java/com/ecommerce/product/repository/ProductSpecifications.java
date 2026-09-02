@@ -32,4 +32,28 @@ public class ProductSpecifications {
             return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
         };
     }
+
+    	public static Specification<Product> buildForAdmin(String name, Long categoryId, BigDecimal minPrice, BigDecimal maxPrice) {
+		return (root, query, cb) -> {
+			var predicates = new java.util.ArrayList<jakarta.persistence.criteria.Predicate>();
+
+			// Deliberately no active-flag predicate — this is the admin-only variant,
+			// which must surface deactivated products too. See ProductService.searchForAdmin().
+
+			if (name != null && !name.isBlank()) {
+				predicates.add(cb.like(cb.lower(root.get("name")), "%" + name.toLowerCase() + "%"));
+			}
+			if (categoryId != null) {
+				predicates.add(cb.equal(root.get("category").get("id"), categoryId));
+			}
+			if (minPrice != null) {
+				predicates.add(cb.greaterThanOrEqualTo(root.get("price"), minPrice));
+			}
+			if (maxPrice != null) {
+				predicates.add(cb.lessThanOrEqualTo(root.get("price"), maxPrice));
+			}
+
+			return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
+		};
+	}
 }

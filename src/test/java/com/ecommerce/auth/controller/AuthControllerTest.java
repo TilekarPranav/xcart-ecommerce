@@ -17,9 +17,9 @@ import com.ecommerce.support.AbstractIntegrationTest;
 import jakarta.servlet.http.Cookie;
 
 /**
- * Controller-level tests for AuthController.
- * Covers login, register, token-type separation, CSRF requirements for stateful endpoints,
- * and 401 handling for bad/unknown credentials.
+ * Controller-level tests for AuthController. Covers login, register, token-type
+ * separation, CSRF requirements for stateful endpoints, and 401 handling for
+ * bad/unknown credentials.
  */
 class AuthControllerTest extends AbstractIntegrationTest {
 
@@ -31,9 +31,7 @@ class AuthControllerTest extends AbstractIntegrationTest {
 				""".formatted(email);
 
 		mockMvc.perform(post("/auth/register").contentType(APPLICATION_JSON).content(body))
-				.andExpect(status().isCreated())
-				.andExpect(jsonPath("$.data.email").value(email))
-				.andExpect(result -> {
+				.andExpect(status().isCreated()).andExpect(jsonPath("$.data.email").value(email)).andExpect(result -> {
 					Cookie access = result.getResponse().getCookie("accessToken");
 					Cookie refresh = result.getResponse().getCookie("refreshToken");
 					org.junit.jupiter.api.Assertions.assertNotNull(access, "accessToken cookie must be set");
@@ -61,8 +59,7 @@ class AuthControllerTest extends AbstractIntegrationTest {
 				{"email":"%s","password":"%s"}
 				""".formatted(user.email(), user.password());
 
-		mockMvc.perform(post("/auth/login").contentType(APPLICATION_JSON).content(body))
-				.andExpect(status().isOk())
+		mockMvc.perform(post("/auth/login").contentType(APPLICATION_JSON).content(body)).andExpect(status().isOk())
 				.andExpect(jsonPath("$.data.email").value(user.email()));
 	}
 
@@ -126,10 +123,9 @@ class AuthControllerTest extends AbstractIntegrationTest {
 		AuthedUser user = registerUser();
 		Cookie csrf = fetchCsrfCookie();
 
-		mockMvc.perform(post("/auth/refresh").cookie(user.refreshToken()).cookie(csrf)
-						.header("X-XSRF-TOKEN", csrf.getValue()))
-				.andExpect(status().isOk())
-				.andExpect(result -> {
+		mockMvc.perform(
+				post("/auth/refresh").cookie(user.refreshToken()).cookie(csrf).header("X-XSRF-TOKEN", csrf.getValue()))
+				.andExpect(status().isOk()).andExpect(result -> {
 					Cookie newAccess = result.getResponse().getCookie("accessToken");
 					org.junit.jupiter.api.Assertions.assertNotNull(newAccess);
 				});
@@ -149,9 +145,8 @@ class AuthControllerTest extends AbstractIntegrationTest {
 		Cookie accessPresentedAsRefresh = new Cookie("refreshToken", user.accessToken().getValue());
 		Cookie csrf = fetchCsrfCookie();
 
-		mockMvc.perform(post("/auth/refresh").cookie(accessPresentedAsRefresh).cookie(csrf)
-						.header("X-XSRF-TOKEN", csrf.getValue()))
-				.andExpect(status().is4xxClientError())
+		mockMvc.perform(post("/auth/refresh").cookie(accessPresentedAsRefresh).cookie(csrf).header("X-XSRF-TOKEN",
+				csrf.getValue())).andExpect(status().is4xxClientError())
 				.andExpect(jsonPath("$.message", containsString("token type")));
 	}
 
@@ -159,8 +154,7 @@ class AuthControllerTest extends AbstractIntegrationTest {
 	void refresh_withoutCsrfToken_isRejected() throws Exception {
 		AuthedUser user = registerUser();
 
-		mockMvc.perform(post("/auth/refresh").cookie(user.refreshToken()))
-				.andExpect(status().isForbidden());
+		mockMvc.perform(post("/auth/refresh").cookie(user.refreshToken())).andExpect(status().isForbidden());
 	}
 
 	@Test
@@ -168,8 +162,8 @@ class AuthControllerTest extends AbstractIntegrationTest {
 		AuthedUser user = registerUser();
 		Cookie csrf = fetchCsrfCookie();
 
-		MvcResult result = mockMvc.perform(post("/auth/logout").cookie(user.accessToken()).cookie(csrf)
-						.header("X-XSRF-TOKEN", csrf.getValue()))
+		MvcResult result = mockMvc.perform(
+				post("/auth/logout").cookie(user.accessToken()).cookie(csrf).header("X-XSRF-TOKEN", csrf.getValue()))
 				.andExpect(status().isOk()).andReturn();
 
 		Cookie access = result.getResponse().getCookie("accessToken");
@@ -183,5 +177,39 @@ class AuthControllerTest extends AbstractIntegrationTest {
 		AuthedUser user = registerUser();
 
 		mockMvc.perform(post("/auth/logout").cookie(user.accessToken())).andExpect(status().isForbidden());
+	}
+
+	/**
+	 * Regression test for a real bug: the refreshToken cookie was previously set
+	 * with Path=/api/auth/refresh, but the actual endpoint is /auth/refresh (no
+	 * /api prefix — this app's frontend calls the backend origin directly, it
+	 * doesn't route through any /api proxy). A browser only attaches a cookie to
+	 * requests whose path falls under the cookie's own Path, so a mismatch here
+	 * means the browser silently never sends the cookie back — MockMvc's
+	 * .cookie(Cookie) doesn't enforce this, so it must be asserted explicitly
+	 * against the literal Set-Cookie header rather than relying on .cookie(...)
+	 * still "working" in a test.
+	 */
+	@Test
+	void refreshCookie_pathMatchesTheActualRefreshEndpoint() throws Exception {
+		AuthedUser user = registerUser();
+		Cookie refresh = user.refreshToken();
+		org.junit.jupiter.api.Assertions.assertEquals("/auth/refresh", refresh.getPath(),
+				"refreshToken cookie's Path must match the real /auth/refresh route, or browsers will never send it back");
+	}
+
+	@Test
+	void logout_clearsRefreshCookie_atTheSamePathItWasSetWith() throws Exception {
+		AuthedUser user = registerUser();
+		Cookie csrf = fetchCsrfCookie();
+
+		MvcResult result = mockMvc.perform(
+				post("/auth/logout").cookie(user.accessToken()).cookie(csrf).header("X-XSRF-TOKEN", csrf.getValue()))
+				.andExpect(status().isOk()).andReturn();
+
+		Cookie clearedRefresh = result.getResponse().getCookie("refreshToken");
+		org.junit.jupiter.api.Assertions.assertEquals(user.refreshToken().getPath(), clearedRefresh.getPath(),
+				"logout must clear the cookie at the exact Path it was set with, or the browser treats this as an "
+						+ "unrelated cookie and the real refreshToken cookie is never deleted");
 	}
 }

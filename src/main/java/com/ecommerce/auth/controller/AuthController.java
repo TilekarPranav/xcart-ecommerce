@@ -52,7 +52,7 @@ public class AuthController {
 		ResponseCookie access = ResponseCookie.from("accessToken", tokens.getAccessToken()).httpOnly(true).secure(true)
 				.sameSite("None").partitioned(true).path("/").maxAge(15 * 60).build();
 		ResponseCookie refresh = ResponseCookie.from("refreshToken", tokens.getRefreshToken()).httpOnly(true)
-				.secure(true).sameSite("None").partitioned(true).path("/api/auth/refresh").maxAge(7 * 24 * 60 * 60).build();
+				.secure(true).sameSite("None").partitioned(true).path("/auth/refresh").maxAge(7 * 24 * 60 * 60).build();
 		response.addHeader(HttpHeaders.SET_COOKIE, access.toString());
 		response.addHeader(HttpHeaders.SET_COOKIE, refresh.toString());
 	}
