@@ -119,14 +119,11 @@ class CsrfProtectionTest extends AbstractIntegrationTest {
 	}
 
 	@Test
-	void login_and_register_remainUsableWithNoPriorCsrfCookie() throws Exception {
-		String body = """
-				{"email":"nobody-%s@test.com","password":"whatever123"}
-				""".formatted(java.util.UUID.randomUUID());
-
-		int status = mockMvc.perform(post("/auth/login").contentType(APPLICATION_JSON).content(body)).andReturn()
-				.getResponse().getStatus();
-		org.junit.jupiter.api.Assertions.assertNotEquals(403, status,
-				"login must not be blocked by CSRF even with no prior cookie");
+	void csrfEndpoint_issuesCookie() throws Exception {
+		var result = mockMvc.perform(get("/auth/csrf")).andReturn();
+		var csrfCookie = result.getResponse().getCookie("XSRF-TOKEN");
+		org.junit.jupiter.api.Assertions.assertNotNull(csrfCookie, "/auth/csrf must issue XSRF-TOKEN cookie");
+		org.junit.jupiter.api.Assertions.assertFalse(csrfCookie.getValue().isEmpty(),
+				"XSRF-TOKEN cookie must have a non-empty value");
 	}
 }

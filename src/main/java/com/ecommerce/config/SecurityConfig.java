@@ -62,7 +62,7 @@ public class SecurityConfig {
 	// its
 	// own GET /auth/me call on app load (GET requests aren't CSRF-checked, but the
 	// CsrfCookieFilter below still issues the cookie on them).
-	private static final String[] CSRF_IGNORED_ENDPOINTS = { "/auth/login", "/auth/register", "/auth/csrf" };
+	private static final String[] CSRF_IGNORED_ENDPOINTS = { "/auth/login", "/auth/register" };
 
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
