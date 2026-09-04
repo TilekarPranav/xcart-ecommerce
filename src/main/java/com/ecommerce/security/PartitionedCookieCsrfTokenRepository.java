@@ -51,8 +51,8 @@ public class PartitionedCookieCsrfTokenRepository implements CsrfTokenRepository
 	public void saveToken(CsrfToken token, HttpServletRequest request, HttpServletResponse response) {
 		boolean isDeleting = token == null;
 		ResponseCookie cookie = ResponseCookie.from(DEFAULT_COOKIE_NAME, isDeleting ? "" : token.getToken())
-				.httpOnly(false).secure(true).sameSite("None").partitioned(true).path("/")
-				.maxAge(isDeleting ? 0 : 60 * 60).build();
+		        .httpOnly(false).secure(true).sameSite("Lax").path("/")
+		        .maxAge(isDeleting ? 0 : 60 * 60).build();
 		response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 	}
 

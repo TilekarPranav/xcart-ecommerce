@@ -49,12 +49,12 @@ public class AuthController {
 	}
 
 	private void addAuthCookies(HttpServletResponse response, AuthResponse tokens) {
-		ResponseCookie access = ResponseCookie.from("accessToken", tokens.getAccessToken()).httpOnly(true).secure(true)
-				.sameSite("None").partitioned(true).path("/").maxAge(15 * 60).build();
-		ResponseCookie refresh = ResponseCookie.from("refreshToken", tokens.getRefreshToken()).httpOnly(true)
-				.secure(true).sameSite("None").partitioned(true).path("/auth/refresh").maxAge(7 * 24 * 60 * 60).build();
-		response.addHeader(HttpHeaders.SET_COOKIE, access.toString());
-		response.addHeader(HttpHeaders.SET_COOKIE, refresh.toString());
+	    ResponseCookie access = ResponseCookie.from("accessToken", tokens.getAccessToken()).httpOnly(true).secure(true)
+	            .sameSite("Lax").path("/").maxAge(15 * 60).build();
+	    ResponseCookie refresh = ResponseCookie.from("refreshToken", tokens.getRefreshToken()).httpOnly(true)
+	            .secure(true).sameSite("Lax").path("/auth/refresh").maxAge(7 * 24 * 60 * 60).build();
+	    response.addHeader(HttpHeaders.SET_COOKIE, access.toString());
+	    response.addHeader(HttpHeaders.SET_COOKIE, refresh.toString());
 	}
 
 	@GetMapping("/me")
@@ -79,9 +79,9 @@ public class AuthController {
 		// httpOnly cookies can't be cleared by client-side JS — this endpoint is the
 		// only way to actually end the session. maxAge(0) tells the browser to
 		// delete the cookie immediately.
-		ResponseCookie access = ResponseCookie.from("accessToken", "").httpOnly(true).secure(true).sameSite("None")
+		ResponseCookie access = ResponseCookie.from("accessToken", "").httpOnly(true).secure(true).sameSite("Lax")
 				.partitioned(true).path("/").maxAge(0).build();
-		ResponseCookie refresh = ResponseCookie.from("refreshToken", "").httpOnly(true).secure(true).sameSite("None")
+		ResponseCookie refresh = ResponseCookie.from("refreshToken", "").httpOnly(true).secure(true).sameSite("Lax")
 				.partitioned(true).path("/auth/refresh").maxAge(0).build();
 		response.addHeader(HttpHeaders.SET_COOKIE, access.toString());
 		response.addHeader(HttpHeaders.SET_COOKIE, refresh.toString());
