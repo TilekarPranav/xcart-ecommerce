@@ -33,19 +33,25 @@ public class AuthController {
 
 	@PostMapping("/register")
 	public ResponseEntity<ApiResponse<UserSummaryResponse>> register(@Valid @RequestBody RegisterRequest request,
-			HttpServletResponse response) {
-		AuthResponse tokens = authService.register(request);
-		addAuthCookies(response, tokens);
-		return ResponseEntity.status(HttpStatus.CREATED)
-				.body(ApiResponse.success(authService.me(tokens.getEmail()), "Account created successfully"));
+	        HttpServletResponse response, CsrfToken csrfToken) {
+	    AuthResponse tokens = authService.register(request);
+	    addAuthCookies(response, tokens);
+	    reissueCsrfToken(csrfToken);
+	    return ResponseEntity.status(HttpStatus.CREATED)
+	            .body(ApiResponse.success(authService.me(tokens.getEmail()), "Account created successfully"));
 	}
 
 	@PostMapping("/login")
 	public ResponseEntity<ApiResponse<UserSummaryResponse>> login(@Valid @RequestBody LoginRequest request,
-			HttpServletResponse response) {
-		AuthResponse tokens = authService.login(request);
-		addAuthCookies(response, tokens);
-		return ResponseEntity.ok(ApiResponse.success(authService.me(tokens.getEmail()), "Login successful"));
+	        HttpServletResponse response, CsrfToken csrfToken) {
+	    AuthResponse tokens = authService.login(request);
+	    addAuthCookies(response, tokens);
+	    reissueCsrfToken(csrfToken);
+	    return ResponseEntity.ok(ApiResponse.success(authService.me(tokens.getEmail()), "Login successful"));
+	}
+
+	private void reissueCsrfToken(CsrfToken csrfToken) {
+	    csrfToken.getToken();
 	}
 
 	private void addAuthCookies(HttpServletResponse response, AuthResponse tokens) {
