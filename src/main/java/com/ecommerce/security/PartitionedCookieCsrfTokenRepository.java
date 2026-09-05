@@ -19,22 +19,16 @@ import jakarta.servlet.http.HttpServletResponse;
  * writes carries the same SameSite=None; Secure; Partitioned attributes
  * AuthController already uses for accessToken/refreshToken.
  *
- * Why not just use CookieCsrfTokenRepository directly: this frontend and
- * backend are deployed as two different sites (x-cart.onrender.com /
- * xcart-ecommerce.onrender.com). Without SameSite=None, the browser will never
- * send this cookie on the cross-site XHR/fetch requests this app depends on —
- * the exact failure mode that previously broke cross-site auth entirely (see
- * AuthController's own cookie config and its history). Rolling this small
- * repository instead of relying on a Spring-Security-version-specific cookie
- * customizer hook keeps the fix independent of the exact Spring Security minor
- * version this project resolves.
- *
- * Security model: the cookie is readable by JavaScript (httpOnly=false) —
- * that's required, since the frontend must read it and echo it back in the
- * X-XSRF-TOKEN header. That's normal and expected for the double-submit
- * pattern: a cross-site attacker can trigger a request that *carries* the
- * cookie automatically, but same-origin policy prevents them from *reading* its
- * value to put in the header themselves.
+ * SameSite=None + Partitioned, not Lax: the frontend calls this backend
+ * DIRECTLY (https://xcart-ecommerce.onrender.com), not through Render's
+ * static-site /api/* proxy rewrite. That proxy was tried and empirically
+ * ruled out — a direct curl test (bypassing the proxy) round-tripped this
+ * exact cookie correctly, while every attempt through the proxy silently
+ * lost it, for reasons outside this app's control. Since x-cart.onrender.com
+ * and xcart-ecommerce.onrender.com are genuinely different sites, this
+ * cookie needs SameSite=None to be sent back on that cross-site request at
+ * all, and Partitioned (CHIPS) so it isn't treated as a blockable
+ * third-party cookie by browsers phasing those out.
  */
 public class PartitionedCookieCsrfTokenRepository implements CsrfTokenRepository {
 
@@ -51,8 +45,8 @@ public class PartitionedCookieCsrfTokenRepository implements CsrfTokenRepository
 	public void saveToken(CsrfToken token, HttpServletRequest request, HttpServletResponse response) {
 		boolean isDeleting = token == null;
 		ResponseCookie cookie = ResponseCookie.from(DEFAULT_COOKIE_NAME, isDeleting ? "" : token.getToken())
-		        .httpOnly(false).secure(true).sameSite("Lax").path("/")
-		        .maxAge(isDeleting ? 0 : 60 * 60).build();
+				.httpOnly(false).secure(true).sameSite("None").partitioned(true).path("/")
+				.maxAge(isDeleting ? 0 : 60 * 60).build();
 		response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 	}
 

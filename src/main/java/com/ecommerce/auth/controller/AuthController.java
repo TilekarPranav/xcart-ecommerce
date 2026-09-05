@@ -33,34 +33,51 @@ public class AuthController {
 
 	@PostMapping("/register")
 	public ResponseEntity<ApiResponse<UserSummaryResponse>> register(@Valid @RequestBody RegisterRequest request,
-	        HttpServletResponse response, CsrfToken csrfToken) {
-	    AuthResponse tokens = authService.register(request);
-	    addAuthCookies(response, tokens);
-	    reissueCsrfToken(csrfToken);
-	    return ResponseEntity.status(HttpStatus.CREATED)
-	            .body(ApiResponse.success(authService.me(tokens.getEmail()), "Account created successfully"));
+			HttpServletResponse response, CsrfToken csrfToken) {
+		AuthResponse tokens = authService.register(request);
+		addAuthCookies(response, tokens);
+		reissueCsrfToken(csrfToken);
+		return ResponseEntity.status(HttpStatus.CREATED)
+				.body(ApiResponse.success(authService.me(tokens.getEmail()), "Account created successfully"));
 	}
 
 	@PostMapping("/login")
 	public ResponseEntity<ApiResponse<UserSummaryResponse>> login(@Valid @RequestBody LoginRequest request,
-	        HttpServletResponse response, CsrfToken csrfToken) {
-	    AuthResponse tokens = authService.login(request);
-	    addAuthCookies(response, tokens);
-	    reissueCsrfToken(csrfToken);
-	    return ResponseEntity.ok(ApiResponse.success(authService.me(tokens.getEmail()), "Login successful"));
+			HttpServletResponse response, CsrfToken csrfToken) {
+		AuthResponse tokens = authService.login(request);
+		addAuthCookies(response, tokens);
+		reissueCsrfToken(csrfToken);
+		return ResponseEntity.ok(ApiResponse.success(authService.me(tokens.getEmail()), "Login successful"));
 	}
 
+	/**
+	 * authService.login() calls authenticationManager.authenticate(...)
+	 * directly, which Spring Security's own CSRF docs note clears the CSRF
+	 * cookie as a side effect of a successful authentication. Resolving
+	 * csrfToken.getToken() here forces a fresh token to be generated and saved
+	 * on THIS response, after any such clearing has already happened.
+	 */
 	private void reissueCsrfToken(CsrfToken csrfToken) {
-	    csrfToken.getToken();
+		csrfToken.getToken();
 	}
 
+	// SameSite=None + Partitioned, not Lax: the frontend calls this backend
+	// DIRECTLY (see API_BASE_URL in the frontend's constants/app.ts), not through
+	// Render's static-site /api/* proxy — that proxy was tried and empirically
+	// ruled out (a direct curl test worked; every attempt through the proxy lost
+	// the CSRF cookie specifically). x-cart.onrender.com and
+	// xcart-ecommerce.onrender.com are genuinely different sites, so these
+	// cookies need SameSite=None to be sent on this cross-site request at all,
+	// and Partitioned (CHIPS) so browsers phasing out third-party cookies don't
+	// block them. Keep all three cookies (this one, refreshToken, and the CSRF
+	// cookie in PartitionedCookieCsrfTokenRepository) consistent with each other.
 	private void addAuthCookies(HttpServletResponse response, AuthResponse tokens) {
-	    ResponseCookie access = ResponseCookie.from("accessToken", tokens.getAccessToken()).httpOnly(true).secure(true)
-	            .sameSite("Lax").path("/").maxAge(15 * 60).build();
-	    ResponseCookie refresh = ResponseCookie.from("refreshToken", tokens.getRefreshToken()).httpOnly(true)
-	            .secure(true).sameSite("Lax").path("/auth/refresh").maxAge(7 * 24 * 60 * 60).build();
-	    response.addHeader(HttpHeaders.SET_COOKIE, access.toString());
-	    response.addHeader(HttpHeaders.SET_COOKIE, refresh.toString());
+		ResponseCookie access = ResponseCookie.from("accessToken", tokens.getAccessToken()).httpOnly(true).secure(true)
+				.sameSite("None").partitioned(true).path("/").maxAge(15 * 60).build();
+		ResponseCookie refresh = ResponseCookie.from("refreshToken", tokens.getRefreshToken()).httpOnly(true)
+				.secure(true).sameSite("None").partitioned(true).path("/auth/refresh").maxAge(7 * 24 * 60 * 60).build();
+		response.addHeader(HttpHeaders.SET_COOKIE, access.toString());
+		response.addHeader(HttpHeaders.SET_COOKIE, refresh.toString());
 	}
 
 	@GetMapping("/me")
@@ -85,9 +102,9 @@ public class AuthController {
 		// httpOnly cookies can't be cleared by client-side JS — this endpoint is the
 		// only way to actually end the session. maxAge(0) tells the browser to
 		// delete the cookie immediately.
-		ResponseCookie access = ResponseCookie.from("accessToken", "").httpOnly(true).secure(true).sameSite("Lax")
+		ResponseCookie access = ResponseCookie.from("accessToken", "").httpOnly(true).secure(true).sameSite("None")
 				.partitioned(true).path("/").maxAge(0).build();
-		ResponseCookie refresh = ResponseCookie.from("refreshToken", "").httpOnly(true).secure(true).sameSite("Lax")
+		ResponseCookie refresh = ResponseCookie.from("refreshToken", "").httpOnly(true).secure(true).sameSite("None")
 				.partitioned(true).path("/auth/refresh").maxAge(0).build();
 		response.addHeader(HttpHeaders.SET_COOKIE, access.toString());
 		response.addHeader(HttpHeaders.SET_COOKIE, refresh.toString());
